@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
+import ContentPage from './ContentPage'
 import {
   ArrowDownRight,
   ArrowRight,
@@ -19,12 +20,13 @@ const serviceTimes = [
 ]
 
 const quickLinks = [
-  { icon: BookOpen, title: 'Nossa história', text: 'Conheça nossa caminhada de fé e a história da nossa comunidade.', href: '#historia' },
-  { icon: PlayCircle, title: 'Mensagens', text: 'Acompanhe sermões, estudos bíblicos e transmissões.', href: '#mensagens' },
-  { icon: CalendarDays, title: 'Agenda', text: 'Veja os encontros e eventos da vida da igreja.', href: '#agenda' },
+  { icon: BookOpen, title: 'Nossa história', text: 'Conheça nossa caminhada de fé e a história da nossa comunidade.', href: '/historia' },
+  { icon: PlayCircle, title: 'Mensagens', text: 'Acompanhe sermões, estudos bíblicos e transmissões.', href: '/#mensagens' },
+  { icon: CalendarDays, title: 'Agenda', text: 'Veja os encontros e eventos da vida da igreja.', href: '/agenda' },
 ]
 
 function App() {
+  const routePath = window.location.pathname
   const [menuOpen, setMenuOpen] = useState(false)
   const [liveServiceTimes, setLiveServiceTimes] = useState<Array<{ day_of_week: string; starts_at: string; title: string; description?: string }>>([])
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
@@ -65,6 +67,8 @@ function App() {
     description.setAttribute('content', 'Conheça a Segunda Igreja Presbiteriana de Belo Horizonte: cultos, mensagens bíblicas, agenda e vida em comunidade.')
   }, [])
 
+  if (routePath === '/agenda' || routePath === '/historia' || routePath.startsWith('/noticias/')) return <ContentPage path={routePath} />
+
   const closeMenu = () => setMenuOpen(false)
   const mapUrl = profile.maps_url || (profile.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(profile.address) : '')
 
@@ -89,11 +93,11 @@ function App() {
         </button>
 
         <nav className={menuOpen ? 'main-nav is-open' : 'main-nav'} aria-label="Navegação principal">
-          <a href="#inicio" onClick={closeMenu}>Início</a>
-          <a href="#historia" onClick={closeMenu}>Nossa história</a>
-          <a href="#agenda" onClick={closeMenu}>Cultos e agenda</a>
-          <a href="#mensagens" onClick={closeMenu}>Mensagens</a>
-          <a className="nav-contact" href="#contato" onClick={closeMenu}>Entre em contato <ArrowRight size={15} /></a>
+          <a href="/" onClick={closeMenu}>Início</a>
+          <a href="/historia" onClick={closeMenu}>Nossa história</a>
+          <a href="/agenda" onClick={closeMenu}>Cultos e agenda</a>
+          <a href="/#mensagens" onClick={closeMenu}>Mensagens</a>
+          <a className="nav-contact" href="/#contato" onClick={closeMenu}>Entre em contato <ArrowRight size={15} /></a>
         </nav>
       </header>
 
@@ -106,8 +110,8 @@ function App() {
             <h1>Uma história de fé.<br /><em>Uma comunidade em Cristo.</em></h1>
             <p>Um lugar para conhecer a Palavra, crescer na fé e caminhar em comunhão.</p>
             <div className="hero-actions">
-              <a className="button button-gold" href="#historia">Conheça nossa igreja <ArrowRight size={17} /></a>
-              <a className="hero-text-link" href="#agenda">Confira a programação <ArrowDownRight size={17} /></a>
+              <a className="button button-gold" href="/historia">Conheça nossa igreja <ArrowRight size={17} /></a>
+              <a className="hero-text-link" href="/agenda">Confira a programação <ArrowDownRight size={17} /></a>
             </div>
           </div>
           <div className="hero-caption"><span className="caption-line" /> Segunda Igreja Presbiteriana de Belo Horizonte</div>
@@ -121,7 +125,7 @@ function App() {
           <div className="welcome-copy">
             <p className="lead">Somos uma comunidade que deseja glorificar a Deus, anunciar o evangelho de Jesus Cristo e viver a fé em comunhão.</p>
             <p>{profile.about_text || 'Somos uma igreja presbiteriana comprometida com as Escrituras, a adoração a Deus e o cuidado mútuo. Queremos caminhar com você na fé e na comunhão cristã.'}</p>
-            <a className="text-link" href="#contato">Saiba mais sobre nós <ArrowRight size={16} /></a>
+            <a className="text-link" href="/historia">Saiba mais sobre nós <ArrowRight size={16} /></a>
           </div>
         </section>
 
@@ -153,8 +157,10 @@ function App() {
             {latestNews.length > 0 ? <div className="updates-block">
               <div className="updates-heading"><div><span className="eyebrow"><span /> Fique por dentro</span><h2>Notícias da <em>comunidade.</em></h2></div></div>
               <div className="updates-grid">{latestNews.map((item) => <article className="update-card" key={item.id}>
-                {item.cover_image_url ? <img src={item.cover_image_url} alt="" loading="lazy" /> : <div className="update-card-placeholder"><BookOpen size={24} /></div>}
-                <div className="update-card-body"><span className="update-category">{item.category}</span><h3>{item.title}</h3><p>{item.excerpt}</p><a className="text-link" href={'/noticias/' + item.slug}>Leia mais <ArrowRight size={15} /></a></div>
+                <a className="update-card-image-link" href={/programa|agenda|ora[cç][aã]o/i.test(item.category + ' ' + item.title) ? '/agenda' : /comunidade|bem-vind|hist[oó]ria/i.test(item.category + ' ' + item.title) ? '/historia' : '/noticias/' + item.slug} aria-label={'Abrir ' + item.title}>
+                  {item.cover_image_url ? <img src={item.cover_image_url} alt="" loading="lazy" /> : <div className="update-card-placeholder"><BookOpen size={24} /></div>}
+                </a>
+                <div className="update-card-body"><span className="update-category">{item.category}</span><h3><a href={/programa|agenda|ora[cç][aã]o/i.test(item.category + ' ' + item.title) ? '/agenda' : /comunidade|bem-vind|hist[oó]ria/i.test(item.category + ' ' + item.title) ? '/historia' : '/noticias/' + item.slug}>{item.title}</a></h3><p>{item.excerpt}</p><a className="text-link" href={/programa|agenda|ora[cç][aã]o/i.test(item.category + ' ' + item.title) ? '/agenda' : /comunidade|bem-vind|hist[oó]ria/i.test(item.category + ' ' + item.title) ? '/historia' : '/noticias/' + item.slug}>{/programa|agenda|ora[cç][aã]o/i.test(item.category + ' ' + item.title) ? 'Ver programação' : /comunidade|bem-vind|hist[oó]ria/i.test(item.category + ' ' + item.title) ? 'Conheça nossa história' : 'Leia mais'} <ArrowRight size={15} /></a></div>
               </article>)}</div>
             </div> : null}
             {upcomingEvents.length > 0 ? <div className="updates-block updates-events">
