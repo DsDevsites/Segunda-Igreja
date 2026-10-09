@@ -29,29 +29,43 @@ function App() {
   const [liveServiceTimes, setLiveServiceTimes] = useState<Array<{ day_of_week: string; starts_at: string; title: string; description?: string }>>([])
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
-  const [latestSermon, setLatestSermon] = useState<{ title: string; speaker: string; scripture: string; description: string; video_url: string } | null>(null)
+  const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
+  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_text?: string; about_text?: string }>({})
 
   useEffect(() => {
     if (!supabase) return
     let active = true
     async function loadPublicContent() {
-      const [times, news, events, sermons] = await Promise.all([
+      const [times, news, events, sermonResult, settings] = await Promise.all([
         supabase!.from('service_times').select('day_of_week,starts_at,title,description').eq('is_active', true).order('sort_order'),
         supabase!.from('news_posts').select('id,title,excerpt,cover_image_url,category,slug').eq('status', 'published').order('published_at', { ascending: false }).limit(3),
         supabase!.from('church_events').select('id,title,description,location,starts_at,cover_image_url').eq('status', 'published').gte('starts_at', new Date().toISOString()).order('starts_at').limit(3),
-        supabase!.from('sermons').select('title,speaker,scripture,description,video_url').eq('status', 'published').order('preached_at', { ascending: false }).limit(1),
+        supabase!.from('sermons').select('id,title,speaker,scripture,description,video_url,audio_url,preached_at,cover_image_url').eq('status', 'published').order('preached_at', { ascending: false }).limit(3),
+        supabase!.from('site_settings').select('setting_value').eq('setting_key', 'church_profile').maybeSingle(),
       ])
       if (!active) return
       if (!times.error && times.data) setLiveServiceTimes(times.data)
       if (!news.error && news.data) setLatestNews(news.data)
       if (!events.error && events.data) setUpcomingEvents(events.data)
-      if (!sermons.error && sermons.data?.[0]) setLatestSermon(sermons.data[0])
+      if (!sermonResult.error && sermonResult.data) setSermons(sermonResult.data)\n      if (!settings.error && settings.data?.setting_value && typeof settings.data.setting_value === 'object') setProfile(settings.data.setting_value as typeof profile)
     }
     void loadPublicContent()
     return () => { active = false }
   }, [])
 
+  useEffect(() => {
+    document.title = 'Segunda Igreja Presbiteriana de Belo Horizonte'
+    let description = document.querySelector('meta[name="description"]')
+    if (!description) {
+      description = document.createElement('meta')
+      description.setAttribute('name', 'description')
+      document.head.appendChild(description)
+    }
+    description.setAttribute('content', 'Conheça a Segunda Igreja Presbiteriana de Belo Horizonte: cultos, mensagens bíblicas, agenda e vida em comunidade.')
+  }, [])
+
   const closeMenu = () => setMenuOpen(false)
+  const mapUrl = profile.maps_url || (profile.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(profile.address) : '')
 
   return (
     <div className="site-shell">
@@ -105,7 +119,7 @@ function App() {
           </div>
           <div className="welcome-copy">
             <p className="lead">Somos uma comunidade que deseja glorificar a Deus, anunciar o evangelho de Jesus Cristo e viver a fé em comunhão.</p>
-            <p>Este espaço está sendo preparado para reunir a história da igreja, informações sobre os cultos, mensagens e atividades da nossa comunidade.</p>
+            <p>{profile.about_text || 'Somos uma igreja presbiteriana comprometida com as Escrituras, a adoração a Deus e o cuidado mútuo. Queremos caminhar com você na fé e na comunhão cristã.'}</p>
             <a className="text-link" href="#contato">Saiba mais sobre nós <ArrowRight size={16} /></a>
           </div>
         </section>
@@ -156,8 +170,8 @@ function App() {
           <div className="service-intro">
             <span className="eyebrow"><span /> Venha nos visitar</span>
             <h2>Há um lugar<br />para você <em>conosco.</em></h2>
-            <p>Será uma alegria receber você e sua família. Em breve, esta área terá os horários oficiais e a programação atualizada da igreja.</p>
-            <a className="button button-blue" href="#contato">Planeje sua visita <ArrowRight size={17} /></a>
+            <p>Será uma alegria receber você e sua família. Confira a programação abaixo e, se precisar de orientação para chegar, consulte o endereço e o mapa.</p>
+            <div className="hero-actions"><a className="button button-blue" href="#contato">Planeje sua visita <ArrowRight size={17} /></a>{mapUrl ? <a className="text-link" href={mapUrl} target="_blank" rel="noreferrer">Como chegar <MapPin size={16} /></a> : null}</div>
           </div>
           <div className="service-card">
             <div className="service-card-title">
@@ -170,7 +184,7 @@ function App() {
                 <span className="service-time">{service.time}</span>
               </div>
             ))}
-            <p className="pending-note">Os horários serão confirmados pela liderança antes da publicação oficial.</p>
+            {!liveServiceTimes.length ? <p className="pending-note">Os horários oficiais serão informados pela liderança da igreja.</p> : <p className="pending-note">Confira a programação e entre em contato se precisar de mais informações.</p>}
           </div>
         </section>
 
@@ -178,9 +192,12 @@ function App() {
           <div className="message-image" role="img" aria-label="Bíblia aberta sobre um banco de madeira" />
           <div className="message-content">
             <span className="eyebrow eyebrow-light"><span /> Palavra que edifica</span>
-            <h2>{latestSermon ? latestSermon.title : <>Uma fé que se fortalece<br /><em>ao ouvir a Palavra.</em></>}</h2>
-            {latestSermon ? <><p>{latestSermon.speaker}{latestSermon.scripture ? ' • ' + latestSermon.scripture : ''}</p><p>{latestSermon.description}</p></> : <p>Este espaço reunirá sermões, estudos e transmissões para você acompanhar e compartilhar.</p>}
-            {latestSermon?.video_url ? <a className="button button-outline-light" href={latestSermon.video_url} target="_blank" rel="noreferrer">Assistir à mensagem <PlayCircle size={18} /></a> : <a className="button button-outline-light" href="#contato">Acompanhe as mensagens <PlayCircle size={18} /></a>}
+            <h2>Mensagens para<br /><em>fortalecer a fé.</em></h2>
+            <p>Acompanhe as mensagens bíblicas e continue refletindo sobre a Palavra durante a semana.</p>
+            {sermons.length ? <div className="sermon-list">{sermons.map((sermon) => <article className="sermon-item" key={sermon.id}>
+              <div><strong>{sermon.title}</strong><span>{[sermon.speaker, sermon.scripture].filter(Boolean).join(' • ')}</span>{sermon.description ? <p>{sermon.description}</p> : null}</div>
+              <div className="sermon-links">{sermon.video_url ? <a href={sermon.video_url} target="_blank" rel="noreferrer" aria-label={'Assistir ' + sermon.title}><PlayCircle size={19} /> Vídeo</a> : null}{sermon.audio_url ? <a href={sermon.audio_url} target="_blank" rel="noreferrer" aria-label={'Ouvir ' + sermon.title}>Ouvir áudio</a> : null}</div>
+            </article>)}</div> : <p>As mensagens serão publicadas aqui pela equipe da igreja.</p>}
           </div>
         </section>
 
@@ -188,12 +205,16 @@ function App() {
           <div>
             <span className="eyebrow"><span /> Estamos à disposição</span>
             <h2>Vamos nos <em>conhecer?</em></h2>
-            <p>Em breve, você encontrará aqui os contatos oficiais, o endereço e os links das redes sociais da igreja.</p>
+            <p>Fale com a equipe da igreja ou consulte o mapa para planejar sua visita. Os dados exibidos são os cadastrados pela administração.</p>
           </div>
           <div className="contact-placeholder">
-            <div className="contact-placeholder-row"><MapPin size={19} /><span>Endereço oficial a confirmar</span></div>
-            <div className="contact-placeholder-row"><CalendarDays size={19} /><span>Horários dos cultos a confirmar</span></div>
-            <div className="contact-placeholder-row"><PlayCircle size={19} /><span>Redes sociais oficiais a confirmar</span></div>
+            <div className="contact-placeholder-row"><MapPin size={19} /><span>{profile.address || 'Endereço será informado pela igreja'}</span></div>
+            {profile.phone ? <div className="contact-placeholder-row"><span>Telefone: {profile.phone}</span></div> : null}
+            {profile.email ? <div className="contact-placeholder-row"><span>E-mail: {profile.email}</span></div> : null}
+            {profile.whatsapp ? <a className="text-link" href={'https://wa.me/' + profile.whatsapp.replace(/\\D/g, '')} target="_blank" rel="noreferrer">Fale pelo WhatsApp <ArrowRight size={16} /></a> : null}
+            {mapUrl ? <a className="text-link" href={mapUrl} target="_blank" rel="noreferrer">Ver no mapa <MapPin size={16} /></a> : null}
+            {profile.instagram_url ? <a className="text-link" href={profile.instagram_url} target="_blank" rel="noreferrer">Instagram <ArrowRight size={16} /></a> : null}
+            {profile.facebook_url ? <a className="text-link" href={profile.facebook_url} target="_blank" rel="noreferrer">Facebook <ArrowRight size={16} /></a> : null}
             <a className="text-link" href="#inicio">Voltar ao início <ArrowRight size={16} /></a>
           </div>
         </section>
@@ -210,7 +231,7 @@ function App() {
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Segunda Igreja Presbiteriana de Belo Horizonte</span>
-          <span>Site em desenvolvimento</span>
+          <span>Fé, Palavra e comunhão</span>
         </div>
       </footer>
     </div>
