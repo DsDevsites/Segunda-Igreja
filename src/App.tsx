@@ -69,7 +69,7 @@ function App() {
     description.setAttribute('content', 'Conheça a Segunda Igreja Presbiteriana de Belo Horizonte: cultos, mensagens bíblicas, agenda e vida em comunidade.')
   }, [])
 
-  if (routePath === '/agenda' || routePath === '/historia' || routePath.startsWith('/noticias/')) return <ContentPage path={routePath} />
+  if (routePath === '/agenda' || routePath === '/historia' || routePath.startsWith('/noticias/') || routePath.startsWith('/paginas/')) return <ContentPage path={routePath} />
 
   const closeMenu = () => setMenuOpen(false)
   const mapUrl = profile.maps_url || (profile.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(profile.address) : '')
