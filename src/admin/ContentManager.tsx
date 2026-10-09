@@ -25,7 +25,7 @@ const resources: Resource[] = [
     { name: 'title', label: 'Nome da programação', required: true }, { name: 'day_of_week', label: 'Dia da semana', required: true }, { name: 'starts_at', label: 'Horário', type: 'time', required: true }, { name: 'description', label: 'Observação', type: 'textarea' }, { name: 'sort_order', label: 'Ordem de exibição' }, { name: 'is_active', label: 'Ativo?', type: 'select', options: ['true', 'false'], required: true },
   ] },
   { key: 'site_settings', label: 'Configurações', singular: 'configuração', icon: Settings2, description: 'Dados gerais do site e textos principais.', fields: [
-    { name: 'setting_key', label: 'Identificador', required: true, help: 'Ex.: church_profile ou homepage' }, { name: 'setting_value', label: 'Configuração em JSON', type: 'json', required: true },
+    { name: 'setting_key', label: 'Identificador', required: true, help: 'Use church_profile para atualizar endereço, telefone, WhatsApp e redes sociais exibidos no site.' }, { name: 'setting_value', label: 'Configuração em JSON', type: 'json', required: true, help: 'Para church_profile, use chaves como address, phone, email, whatsapp (somente números com DDI/DDD), instagram_url, facebook_url, maps_url, about_text.' },
   ] },
 ]
 
