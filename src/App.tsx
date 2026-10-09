@@ -110,8 +110,7 @@ function App() {
             <h1>Uma história de fé.<br /><em>Uma comunidade em Cristo.</em></h1>
             <p>Um lugar para conhecer a Palavra, crescer na fé e caminhar em comunhão.</p>
             <div className="hero-actions">
-              <a className="button button-gold" href="/historia">Conheça nossa igreja <ArrowRight size={17} /></a>
-              <a className="hero-text-link" href="/agenda">Confira a programação <ArrowDownRight size={17} /></a>
+
             </div>
           </div>
           <div className="hero-caption"><span className="caption-line" /> Segunda Igreja Presbiteriana de Belo Horizonte</div>
