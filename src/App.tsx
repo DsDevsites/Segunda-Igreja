@@ -162,7 +162,7 @@ function App() {
             <span className="brand-copy"><strong>Segunda Igreja</strong><small>Presbiteriana de Belo Horizonte</small></span>
           </a>
           <p>Fé, Palavra e comunhão.<br />Uma comunidade em Cristo.</p>
-          <a className="footer-top" href="#inicio">Voltar ao topo ↑</a>
+          <div className="footer-links"><a className="footer-top" href="#inicio">Voltar ao topo ↑</a><a className="footer-admin-link" href="/admin">Área administrativa</a></div>
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Segunda Igreja Presbiteriana de Belo Horizonte</span>
