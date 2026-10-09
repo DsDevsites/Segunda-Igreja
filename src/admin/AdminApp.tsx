@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { FormEvent } from 'react'
 import { ArrowLeft, Cross, Eye, EyeOff, LockKeyhole, LogOut, ShieldCheck } from 'lucide-react'
 import { isSupabaseConfigured, supabase } from '../lib/supabase'
+import ContentManager from './ContentManager'
 
 type ViewState = 'loading' | 'login' | 'dashboard' | 'not-admin' | 'error'
 
@@ -116,13 +117,15 @@ export default function AdminApp() {
       ) : null}
 
       {view === 'dashboard' ? (
-        <section className="admin-card admin-dashboard">
-          <div className="admin-dashboard-heading">
-            <span className="admin-emblem"><ShieldCheck size={27} /></span>
-            <div><span className="admin-kicker">PAINEL SEGURO</span><h1>Bem-vindo ao painel</h1><p className="admin-description">A autenticação foi validada. A gestão de notícias, agenda e páginas será adicionada na próxima etapa.</p></div>
-          </div>
-          <div className="admin-dashboard-status"><span className="status-dot" /> Conta administrativa autenticada</div>
-          <button className="admin-submit admin-logout" onClick={handleSignOut}><LogOut size={17} /> Sair com segurança</button>
+        <section className="admin-dashboard-page">
+          <header className="admin-dashboard-bar">
+            <div className="admin-brand">
+              <span className="admin-emblem"><ShieldCheck size={25} /></span>
+              <span><strong>Segunda Igreja</strong><small>Painel administrativo</small></span>
+            </div>
+            <div className="admin-bar-actions"><span className="admin-dashboard-status"><span className="status-dot" /> Acesso autorizado</span><button className="cms-secondary-button" onClick={handleSignOut}><LogOut size={16} /> Sair</button></div>
+          </header>
+          <ContentManager />
         </section>
       ) : null}
 
