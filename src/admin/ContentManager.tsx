@@ -19,7 +19,7 @@ const resources: Resource[] = [
     { name: 'title', label: 'Título', required: true }, { name: 'speaker', label: 'Pregador' }, { name: 'scripture', label: 'Referência bíblica' }, { name: 'description', label: 'Descrição', type: 'textarea' }, { name: 'video_url', label: 'Link do vídeo', type: 'url' }, { name: 'audio_url', label: 'Link do áudio', type: 'url' }, { name: 'cover_image_url', label: 'URL da imagem', type: 'url' }, { name: 'preached_at', label: 'Data da mensagem', type: 'date' }, { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published'], required: true },
   ] },
   { key: 'pages', label: 'Páginas', singular: 'página', icon: FileText, description: 'Páginas institucionais, como história e ministérios.', fields: [
-    { name: 'title', label: 'Título', required: true }, { name: 'slug', label: 'Endereço amigável (slug)', required: true }, { name: 'excerpt', label: 'Resumo', type: 'textarea' }, { name: 'body', label: 'Conteúdo', type: 'textarea' }, { name: 'cover_image_url', label: 'URL da imagem de capa', type: 'url' }, { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published'], required: true },
+    { name: 'title', label: 'Título', required: true }, { name: 'slug', label: 'Endereço amigável (slug)', required: true, help: 'Define o endereço da página: exemplo nossa-historia.' }, { name: 'excerpt', label: 'Resumo', type: 'textarea' }, { name: 'body', label: 'Conteúdo', type: 'textarea' }, { name: 'cover_image_url', label: 'URL da imagem de capa', type: 'url' }, { name: 'section_name', label: 'Área do menu', help: 'Páginas com o mesmo nome ficam agrupadas no mesmo menu. Ex.: Institucional, Ministérios, Documentos.' }, { name: 'menu_label', label: 'Nome do link no menu', help: 'Deixe vazio para usar o título da página.' }, { name: 'menu_order', label: 'Ordem no menu', type: 'number' as FieldType }, { name: 'show_in_menu', label: 'Exibir no menu?', type: 'select', options: ['true', 'false'], required: true }, { name: 'external_url', label: 'Link externo (opcional)', type: 'url', help: 'Se preenchido, o item do menu abre este endereço em vez da página interna.' }, { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published'], required: true },
   ] },
   { key: 'service_times', label: 'Horários', singular: 'horário', icon: Clock3, description: 'Horários de cultos e encontros semanais.', fields: [
     { name: 'title', label: 'Nome da programação', required: true }, { name: 'day_of_week', label: 'Dia da semana', required: true }, { name: 'starts_at', label: 'Horário', type: 'time', required: true }, { name: 'description', label: 'Observação', type: 'textarea' }, { name: 'sort_order', label: 'Ordem de exibição' }, { name: 'is_active', label: 'Ativo?', type: 'select', options: ['true', 'false'], required: true },
@@ -32,7 +32,7 @@ const resources: Resource[] = [
 function blankRecord(resource: Resource) {
   const value: Record<string, unknown> = {}
   resource.fields.forEach((field) => {
-    value[field.name] = field.name === 'status' ? 'draft' : field.name === 'category' ? 'Notícias' : field.name === 'is_active' ? 'true' : field.name === 'sort_order' ? '0' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
+    value[field.name] = field.name === 'status' ? 'draft' : field.name === 'category' ? 'Notícias' : field.name === 'is_active' || field.name === 'show_in_menu' ? 'false' : field.name === 'sort_order' || field.name === 'menu_order' ? '0' : field.name === 'section_name' ? 'Institucional' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
   })
   return value
 }
@@ -95,7 +95,7 @@ export default function ContentManager() {
 
   function beginEdit(row: Record<string, unknown>) {
     const next: Record<string, unknown> = {}
-    resource.fields.forEach((field) => { next[field.name] = toInputValue(field, row[field.name]) })
+    resource.fields.forEach((field) => { next[field.name] = field.name === 'show_in_menu' ? String(Boolean(row[field.name])) : toInputValue(field, row[field.name]) })
     setEditing({ ...next, id: row.id })
     setIsCreating(false)
     setNotice('')
@@ -209,7 +209,7 @@ export default function ContentManager() {
                 {field.type === 'textarea' || field.type === 'json' ? <textarea value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} rows={field.type === 'json' ? 8 : 4} spellCheck={field.type !== 'json'} />
                   : field.type === 'select' ? <select value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required}>{(field.options ?? []).map((option) => <option key={option} value={option}>{option === 'published' ? 'Publicado' : option === 'draft' ? 'Rascunho' : option === 'cancelled' ? 'Cancelado' : option === 'true' ? 'Sim' : option === 'false' ? 'Não' : option}</option>)}</select>
                   : field.type === 'url' && field.name === 'cover_image_url' ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL da imagem ou envie um arquivo" /><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando imagem...' : 'JPG, PNG, WebP ou GIF · máximo 10 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <img src={String(editing[field.name])} alt="Pré-visualização da imagem" style={{ display: 'block', maxWidth: '220px', maxHeight: '140px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px' }} /> : null}</>
-                  : <input type={field.type ?? 'text'} value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} step={field.type === 'time' ? 60 : undefined} />}
+                  : <input type={field.type === 'number' ? 'number' : field.type ?? 'text'} value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} step={field.type === 'time' ? 60 : undefined} />}
                 {field.help ? <small>{field.help}</small> : null}
               </label>)}
             </div>
