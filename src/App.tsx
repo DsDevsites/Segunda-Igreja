@@ -28,6 +28,7 @@ function App() {
   const routePath = window.location.pathname
   const [menuOpen, setMenuOpen] = useState(false)
   const [liveServiceTimes, setLiveServiceTimes] = useState<Array<{ day_of_week: string; starts_at: string; title: string; description?: string }>>([])
+  const [menuPages, setMenuPages] = useState<Array<{ id: string; title: string; slug: string; section_name: string; menu_label: string; menu_order: number; external_url: string }>>([])
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
   const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
@@ -37,12 +38,13 @@ function App() {
     if (!supabase) return
     let active = true
     async function loadPublicContent() {
-      const [times, news, events, sermonResult, settings] = await Promise.all([
+      const [times, news, events, sermonResult, settings, pagesResult] = await Promise.all([
         supabase!.from('service_times').select('day_of_week,starts_at,title,description').eq('is_active', true).order('sort_order'),
         supabase!.from('news_posts').select('id,title,excerpt,cover_image_url,category,slug').eq('status', 'published').order('published_at', { ascending: false }).limit(3),
         supabase!.from('church_events').select('id,title,description,location,starts_at,cover_image_url').eq('status', 'published').gte('starts_at', new Date().toISOString()).order('starts_at').limit(3),
         supabase!.from('sermons').select('id,title,speaker,scripture,description,video_url,audio_url,preached_at,cover_image_url').eq('status', 'published').order('preached_at', { ascending: false }).limit(3),
         supabase!.from('site_settings').select('setting_value').eq('setting_key', 'church_profile').maybeSingle(),
+        supabase!.from('pages').select('id,title,slug,section_name,menu_label,menu_order,external_url').eq('status', 'published').eq('show_in_menu', true).order('menu_order').order('title'),
       ])
       if (!active) return
       if (!times.error && times.data) setLiveServiceTimes(times.data)
@@ -50,6 +52,7 @@ function App() {
       if (!events.error && events.data) setUpcomingEvents(events.data)
       if (!sermonResult.error && sermonResult.data) setSermons(sermonResult.data)
       if (!settings.error && settings.data?.setting_value && typeof settings.data.setting_value === 'object') setProfile(settings.data.setting_value as typeof profile)
+      if (!pagesResult.error && pagesResult.data) setMenuPages(pagesResult.data)
     }
     void loadPublicContent()
     return () => { active = false }
@@ -94,9 +97,16 @@ function App() {
         <nav className={menuOpen ? 'main-nav is-open' : 'main-nav'} aria-label="Navegação principal">
           <a href="/" onClick={closeMenu}>Início</a>
           <a href="/historia" onClick={closeMenu}>Nossa história</a>
-          <a href="/agenda" onClick={closeMenu}>Cultos e agenda</a>
+          <a href="/agenda" onClick={closeMenu}>Agenda</a>
+          {Array.from(new Set(menuPages.map((page) => page.section_name?.trim() || 'Páginas'))).map((section) => {
+            const links = menuPages.filter((page) => (page.section_name?.trim() || 'Páginas') === section)
+            return <div className="nav-dropdown" key={section}>
+              <button className="nav-dropdown-trigger" type="button" aria-haspopup="true">{section}<span className="nav-chevron">⌄</span></button>
+              <div className="nav-dropdown-menu">{links.map((page) => <a key={page.id} href={page.external_url?.trim() || '/paginas/' + page.slug} target={page.external_url?.trim() ? '_blank' : undefined} rel={page.external_url?.trim() ? 'noreferrer' : undefined} onClick={closeMenu}>{page.menu_label?.trim() || page.title}</a>)}</div>
+            </div>
+          })}
           <a href="/#mensagens" onClick={closeMenu}>Mensagens</a>
-          <a className="nav-contact" href="/#contato" onClick={closeMenu}>Entre em contato <ArrowRight size={15} /></a>
+          <a className="nav-contact" href="/#contato" onClick={closeMenu}>Contato <ArrowRight size={15} /></a>
         </nav>
       </header>
 
