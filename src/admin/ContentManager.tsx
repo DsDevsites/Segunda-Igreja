@@ -60,6 +60,7 @@ export default function ContentManager() {
   const [isCreating, setIsCreating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const resource = resources.find((item) => item.key === activeKey) ?? resources[0]
@@ -103,6 +104,26 @@ export default function ContentManager() {
 
   function updateField(name: string, value: string) {
     setEditing((current) => current ? { ...current, [name]: value } : current)
+  }
+
+  async function uploadImage(file: File) {
+    if (!supabase || !editing) return
+    if (!file.type.startsWith('image/')) { setError('Selecione um arquivo de imagem.'); return }
+    if (file.size > 10 * 1024 * 1024) { setError('A imagem deve ter no máximo 10 MB.'); return }
+    setUploadingImage(true)
+    setError('')
+    setNotice('')
+    const safeName = file.name.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '-')
+    const path = `${activeKey}/${Date.now()}-${safeName || 'imagem'}`
+    const { error: uploadError } = await supabase.storage.from('church-media').upload(path, file, { upsert: false, contentType: file.type })
+    setUploadingImage(false)
+    if (uploadError) {
+      setError(uploadError.message.includes('row-level security') ? 'O Supabase bloqueou o envio. Confira se sua sessão administrativa foi renovada após a configuração das permissões.' : 'Não foi possível enviar a imagem. Tente novamente.')
+      return
+    }
+    const { data } = supabase.storage.from('church-media').getPublicUrl(path)
+    updateField('cover_image_url', data.publicUrl)
+    setNotice('Imagem enviada. Salve o cadastro para aplicar a imagem ao conteúdo.')
   }
 
   async function saveRecord(event: FormEvent<HTMLFormElement>) {
@@ -166,7 +187,7 @@ export default function ContentManager() {
           const Icon = item.icon
           return <button key={item.key} className={activeKey === item.key ? 'cms-nav-item is-active' : 'cms-nav-item'} onClick={() => chooseResource(item.key)}><Icon size={17} /><span>{item.label}</span><ChevronRight size={14} /></button>
         })}
-        <div className="cms-sidebar-tip"><Image size={17} /><span>Imagens podem ser adicionadas usando URLs públicas. O armazenamento de arquivos será configurado em uma próxima etapa.</span></div>
+        <div className="cms-sidebar-tip"><Image size={17} /><span>Envie imagens diretamente para o armazenamento seguro da igreja ou informe uma URL pública. Arquivos de até 10 MB.</span></div>
       </aside>
 
       <section className="cms-main">
@@ -186,6 +207,7 @@ export default function ContentManager() {
                 <span>{field.label}{field.required ? ' *' : ''}</span>
                 {field.type === 'textarea' || field.type === 'json' ? <textarea value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} rows={field.type === 'json' ? 8 : 4} spellCheck={field.type !== 'json'} />
                   : field.type === 'select' ? <select value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required}>{(field.options ?? []).map((option) => <option key={option} value={option}>{option === 'published' ? 'Publicado' : option === 'draft' ? 'Rascunho' : option === 'cancelled' ? 'Cancelado' : option === 'true' ? 'Sim' : option === 'false' ? 'Não' : option}</option>)}</select>
+                  : field.type === 'url' && field.name === 'cover_image_url' ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL da imagem ou envie um arquivo" /><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando imagem...' : 'JPG, PNG, WebP ou GIF · máximo 10 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <img src={String(editing[field.name])} alt="Pré-visualização da imagem" style={{ display: 'block', maxWidth: '220px', maxHeight: '140px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px' }} /> : null}</>
                   : <input type={field.type ?? 'text'} value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} step={field.type === 'time' ? 60 : undefined} />}
                 {field.help ? <small>{field.help}</small> : null}
               </label>)}
