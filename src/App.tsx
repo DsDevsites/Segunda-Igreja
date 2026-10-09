@@ -47,7 +47,8 @@ function App() {
       if (!times.error && times.data) setLiveServiceTimes(times.data)
       if (!news.error && news.data) setLatestNews(news.data)
       if (!events.error && events.data) setUpcomingEvents(events.data)
-      if (!sermonResult.error && sermonResult.data) setSermons(sermonResult.data)\n      if (!settings.error && settings.data?.setting_value && typeof settings.data.setting_value === 'object') setProfile(settings.data.setting_value as typeof profile)
+      if (!sermonResult.error && sermonResult.data) setSermons(sermonResult.data)
+      if (!settings.error && settings.data?.setting_value && typeof settings.data.setting_value === 'object') setProfile(settings.data.setting_value as typeof profile)
     }
     void loadPublicContent()
     return () => { active = false }
