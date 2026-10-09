@@ -1,12 +1,12 @@
 # Segunda Igreja Presbiteriana de Belo Horizonte
 
-Site institucional em desenvolvimento para a Segunda Igreja Presbiteriana de Belo Horizonte.
+Site institucional em desenvolvimento, com página pública e painel administrativo conectado ao Supabase.
 
 ## Stack
 
 - React + TypeScript + Vite
-- CSS responsivo com identidade visual branca, azul e dourada
-- Supabase Auth planejado para login administrativo
+- CSS responsivo com identidade visual branca, azul-marinho e dourada
+- Supabase Auth, Postgres e Row Level Security
 - GitHub para versionamento
 - Hospedagem a definir após os testes
 
@@ -16,33 +16,39 @@ Requisitos: Node.js LTS e npm.
 
 ```bash
 npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-## Verificar a versão de produção
-
-```bash
-npm run build
-npm run preview
-```
+Preencha `.env.local` com a URL e a chave publicável do seu projeto. Não adicione o arquivo `.env.local` ao Git.
 
 ## Configurar o Supabase
 
-1. Crie um projeto Supabase para a igreja.
-2. Copie `.env.example` para `.env.local`.
-3. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com a URL e a chave publicável/anon do projeto.
-4. Reinicie o servidor de desenvolvimento.
+Variáveis necessárias:
 
-Nunca coloque a chave `service_role` no frontend ou no GitHub. A conta administrativa deve receber a permissão no backend; não existe cadastro público de administradores.
+- `VITE_SUPABASE_URL`: URL do projeto Supabase.
+- `VITE_SUPABASE_PUBLISHABLE_KEY`: chave publicável que começa com `sb_publishable_`. A variável legada `VITE_SUPABASE_ANON_KEY` também é aceita.
 
-## Situação atual
+Nunca coloque a chave `service_role`, chaves secretas ou senha do banco no frontend ou no GitHub.
 
-- Página inicial responsiva em protótipo.
-- Rota `/admin` com interface de login.
-- Cliente Supabase preparado, aguardando configuração do projeto.
-- Após conectar o Supabase, será necessário autorizar a conta administrativa e testar o login.
-- Dashboard de gestão de notícias, eventos, sermões e páginas ainda será implementado.
-- Endereço, horários, contatos, redes sociais e materiais oficiais precisam ser confirmados pela igreja antes da publicação.
+## Recursos implementados
+
+- Página inicial responsiva.
+- Leitura pública de horários, notícias, próximos eventos e último sermão publicados.
+- Rota `/admin` com login via Supabase Auth.
+- Painel de gestão para notícias, eventos, sermões, páginas, horários e configurações.
+- Criação, edição, publicação/rascunho e exclusão de registros.
+- Tabelas do banco com Row Level Security habilitado e políticas de leitura pública para conteúdo publicado.
+- Verificação de build via GitHub Actions.
+
+## Próximas etapas
+
+1. Configurar as variáveis de ambiente no ambiente local ou na hospedagem.
+2. Criar a conta do responsável pelo painel no Supabase Auth e atribuir o papel administrativo em `app_metadata.role = "admin"`.
+3. Confirmar que o login, as políticas RLS e as operações CRUD funcionam.
+4. Configurar armazenamento de imagens e upload direto pelo painel.
+5. Preparar detalhes de páginas individuais e revisar conteúdo e imagens demonstrativos.
+6. Confirmar endereço, horários, contatos, redes sociais e materiais oficiais antes da publicação.
 
 ## Identidade visual provisória
 
@@ -51,4 +57,4 @@ Nunca coloque a chave `service_role` no frontend ou no GitHub. A conta administr
 - Branco: `#FFFFFF`
 - Cinza suave: `#F5F7FA`
 
-As cores devem ser confirmadas com a identidade oficial da igreja.
+As cores e todos os conteúdos de demonstração devem ser confirmados antes da publicação.
