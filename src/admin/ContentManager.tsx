@@ -139,7 +139,8 @@ export default function ContentManager() {
         try { payload[field.name] = JSON.parse(String(raw || '{}')) } catch { setError('O campo JSON contém um formato inválido.'); setSaving(false); return }
       } else if (field.name === 'is_active') payload[field.name] = raw === 'true'
       else if (field.name === 'sort_order') payload[field.name] = Number(raw || 0)
-      else if (field.name === 'ends_at' || field.name === 'preached_at') payload[field.name] = raw || null
+      else if (field.name === 'ends_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
+      else if (field.name === 'preached_at') payload[field.name] = raw || null
       else if (field.name === 'starts_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
       else if (field.name === 'published_at' && raw) payload[field.name] = raw
       else payload[field.name] = raw ?? ''
