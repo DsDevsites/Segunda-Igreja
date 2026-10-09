@@ -173,7 +173,7 @@ export default function ContentManager() {
     await loadRows()
   }
 
-  const displayTitle = (row: Record<string, unknown>) => String(row.title ?? row.setting_key ?? 'Item sem título')
+  const displayTitle = (row: Record<string, unknown>) => String(row.title ?? row.label ?? row.setting_key ?? 'Item sem título')
   const statusLabel = (row: Record<string, unknown>) => {
     if (row.status === 'published') return 'Publicado'
     if (row.status === 'draft') return 'Rascunho'
