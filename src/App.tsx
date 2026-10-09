@@ -4,7 +4,6 @@ import {
   ArrowRight,
   BookOpen,
   CalendarDays,
-  ChevronDown,
   Clock3,
   Cross,
   MapPin,
