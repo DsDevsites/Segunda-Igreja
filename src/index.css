@@ -340,3 +340,20 @@ button { font: inherit; }
   .update-card-body h3 { font-size: 18px; }
   .update-card-body .text-link { margin-top: 5px; }
 }
+
+
+/* Melhorias de conteúdo e visita */
+.sermon-list { display: grid; gap: 12px; margin: 24px 0 4px; }
+.sermon-item { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; padding: 16px 0; border-top: 1px solid rgba(255,255,255,.2); }
+.sermon-item > div:first-child { min-width: 0; }
+.sermon-item strong { display: block; color: #fff; font-size: 14px; line-height: 1.5; }
+.sermon-item span { display: block; margin-top: 5px; color: #d8c18d; font-size: 10px; line-height: 1.6; }
+.sermon-item p { margin: 7px 0 0; color: #e0e7ee; font-size: 11px; line-height: 1.7; }
+.sermon-links { display: flex; flex-shrink: 0; flex-wrap: wrap; gap: 10px; }
+.sermon-links a { display: inline-flex; align-items: center; gap: 5px; color: #fff; font-size: 10px; font-weight: 700; }
+.sermon-links a:hover { color: var(--gold-light); }
+.contact-placeholder .text-link { display: inline-flex; margin-top: 12px; }
+@media (max-width: 580px) {
+  .sermon-item { flex-direction: column; gap: 12px; }
+  .sermon-links { width: 100%; }
+}
