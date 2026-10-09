@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { CalendarDays, Check, ChevronRight, FileText, Image, LoaderCircle, Newspaper, Plus, RefreshCw, Save, Settings2, Trash2, Video, Clock3, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings'
+type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings' | 'navigation_sections'
 type FieldType = 'text' | 'textarea' | 'url' | 'date' | 'datetime-local' | 'time' | 'number' | 'select' | 'json'
 type Field = { name: string; label: string; type?: FieldType; required?: boolean; options?: string[]; help?: string }
 type Resource = { key: ResourceKey; label: string; singular: string; icon: typeof Newspaper; description: string; fields: Field[] }
@@ -27,12 +27,15 @@ const resources: Resource[] = [
   { key: 'site_settings', label: 'Configurações', singular: 'configuração', icon: Settings2, description: 'Dados gerais do site e textos principais.', fields: [
     { name: 'setting_key', label: 'Identificador', required: true, help: 'Use church_profile para atualizar endereço, telefone, WhatsApp e redes sociais exibidos no site.' }, { name: 'setting_value', label: 'Configuração em JSON', type: 'json', required: true, help: 'Para church_profile, use chaves como address, phone, email, whatsapp (somente números com DDI/DDD), instagram_url, facebook_url, maps_url, about_text.' },
   ] },
+  { key: 'navigation_sections', label: 'Menu do site', singular: 'área do menu', icon: Settings2, description: 'Crie, renomeie, ordene e oculte áreas do menu principal. Para adicionar links dentro de uma área, cadastre uma página com o mesmo nome em “Área do menu”.', fields: [
+    { name: 'label', label: 'Nome da área', required: true, help: 'Ex.: IPU, DOCUMENTOS, PRESBITÉRIOS.' }, { name: 'sort_order', label: 'Ordem no menu', type: 'number', required: true }, { name: 'show_in_menu', label: 'Exibir no site?', type: 'select', options: ['true', 'false'], required: true }, { name: 'is_dropdown', label: 'Abrir lista de links?', type: 'select', options: ['true', 'false'], required: true }, { name: 'target_url', label: 'Destino se não abrir lista', type: 'url', help: 'Opcional. Usado quando “Abrir lista de links?” estiver como Não.' },
+  ] },
 ]
 
 function blankRecord(resource: Resource) {
   const value: Record<string, unknown> = {}
   resource.fields.forEach((field) => {
-    value[field.name] = field.name === 'status' ? 'draft' : field.name === 'category' ? 'Notícias' : field.name === 'is_active' || field.name === 'show_in_menu' ? 'false' : field.name === 'sort_order' || field.name === 'menu_order' ? '0' : field.name === 'section_name' ? 'Institucional' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
+    value[field.name] = field.name === 'status' ? 'draft' : field.name === 'category' ? 'Notícias' : field.name === 'is_active' ? 'false' : field.name === 'show_in_menu' ? (resource.key === 'navigation_sections' ? 'true' : 'false') : field.name === 'is_dropdown' ? 'true' : field.name === 'sort_order' || field.name === 'menu_order' ? '0' : field.name === 'section_name' ? 'Institucional' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
   })
   return value
 }
@@ -69,7 +72,7 @@ export default function ContentManager() {
     if (!supabase) return
     setLoading(true)
     setError('')
-    const orderColumn = activeKey === 'service_times' ? 'sort_order' : activeKey === 'site_settings' ? 'setting_key' : 'created_at'
+    const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' ? 'sort_order' : activeKey === 'site_settings' ? 'setting_key' : 'created_at'
     const { data, error: queryError } = await supabase.from(activeKey as any).select('*').order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' })
     if (queryError) setError(queryError.message.includes('permission') || queryError.message.includes('row-level') ? 'A conta precisa ter a função administrativa configurada no Supabase.' : 'Não foi possível carregar os dados. Confira a conexão e as permissões.')
     setRows((data ?? []) as Record<string, unknown>[])
@@ -95,7 +98,7 @@ export default function ContentManager() {
 
   function beginEdit(row: Record<string, unknown>) {
     const next: Record<string, unknown> = {}
-    resource.fields.forEach((field) => { next[field.name] = field.name === 'show_in_menu' ? String(Boolean(row[field.name])) : toInputValue(field, row[field.name]) })
+    resource.fields.forEach((field) => { next[field.name] = ['show_in_menu', 'is_dropdown', 'is_active'].includes(field.name) ? String(Boolean(row[field.name])) : toInputValue(field, row[field.name]) })
     setEditing({ ...next, id: row.id })
     setIsCreating(false)
     setNotice('')
@@ -137,8 +140,8 @@ export default function ContentManager() {
       const raw = editing[field.name]
       if (field.type === 'json') {
         try { payload[field.name] = JSON.parse(String(raw || '{}')) } catch { setError('O campo JSON contém um formato inválido.'); setSaving(false); return }
-      } else if (field.name === 'is_active') payload[field.name] = raw === 'true'
-      else if (field.name === 'sort_order') payload[field.name] = Number(raw || 0)
+      } else if (['is_active', 'show_in_menu', 'is_dropdown'].includes(field.name)) payload[field.name] = raw === 'true'
+      else if (['sort_order', 'menu_order'].includes(field.name)) payload[field.name] = Number(raw || 0)
       else if (field.name === 'ends_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
       else if (field.name === 'preached_at') payload[field.name] = raw || null
       else if (field.name === 'starts_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
@@ -218,7 +221,7 @@ export default function ContentManager() {
         ) : (
           <div className="cms-list-card">
             <div className="cms-list-top"><strong>{rows.length} {rows.length === 1 ? 'registro' : 'registros'}</strong><span>Somente a equipe autorizada pode alterar o conteúdo.</span></div>
-            {loading ? <div className="cms-empty"><LoaderCircle className="cms-spin" size={22} /><span>Carregando conteúdo...</span></div> : rows.length === 0 ? <div className="cms-empty"><FileText size={24} /><strong>Nenhum item cadastrado</strong><span>Use “Novo item” para adicionar o primeiro conteúdo.</span></div> : <div className="cms-record-list">{rows.map((row) => <article className="cms-record" key={String(row.id ?? row.setting_key)}><div className="cms-record-copy"><strong>{displayTitle(row)}</strong><span>{String(row.excerpt ?? row.description ?? row.speaker ?? row.day_of_week ?? row.slug ?? '')}</span><div className="cms-record-meta"><span className={row.status === 'published' || row.is_active === true ? 'cms-status is-published' : 'cms-status'}>{statusLabel(row)}</span>{row.starts_at && activeKey === 'church_events' ? <span>{formatDate(row.starts_at)}</span> : null}{row.created_at && activeKey !== 'site_settings' && activeKey !== 'service_times' ? <span>Criado em {formatDate(row.created_at)}</span> : null}</div></div><div className="cms-record-actions"><button className="cms-icon-button" onClick={() => beginEdit(row)} aria-label={'Editar ' + displayTitle(row)} title="Editar"><Settings2 size={16} /></button><button className="cms-icon-button cms-delete-button" onClick={() => void deleteRecord(row)} aria-label={'Excluir ' + displayTitle(row)} title="Excluir"><Trash2 size={16} /></button></div></article>)}</div>}
+            {loading ? <div className="cms-empty"><LoaderCircle className="cms-spin" size={22} /><span>Carregando conteúdo...</span></div> : rows.length === 0 ? <div className="cms-empty"><FileText size={24} /><strong>Nenhum item cadastrado</strong><span>Use “Novo item” para adicionar o primeiro conteúdo.</span></div> : <div className="cms-record-list">{rows.map((row) => <article className="cms-record" key={String(row.id ?? row.setting_key)}><div className="cms-record-copy"><strong>{displayTitle(row)}</strong><span>{String(row.excerpt ?? row.description ?? row.speaker ?? row.day_of_week ?? row.slug ?? row.label ?? '')}</span><div className="cms-record-meta"><span className={row.status === 'published' || row.is_active === true ? 'cms-status is-published' : 'cms-status'}>{statusLabel(row)}</span>{row.starts_at && activeKey === 'church_events' ? <span>{formatDate(row.starts_at)}</span> : null}{row.created_at && activeKey !== 'site_settings' && activeKey !== 'service_times' ? <span>Criado em {formatDate(row.created_at)}</span> : null}</div></div><div className="cms-record-actions"><button className="cms-icon-button" onClick={() => beginEdit(row)} aria-label={'Editar ' + displayTitle(row)} title="Editar"><Settings2 size={16} /></button><button className="cms-icon-button cms-delete-button" onClick={() => void deleteRecord(row)} aria-label={'Excluir ' + displayTitle(row)} title="Excluir"><Trash2 size={16} /></button></div></article>)}</div>}
           </div>
         )}
         <p className="cms-demo-note">Ambiente de demonstração: confirme e substitua os dados fictícios antes de publicar o site.</p>
