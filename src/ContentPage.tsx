@@ -4,6 +4,7 @@ import { supabase } from './lib/supabase'
 
 type ChurchEvent = { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string | null; cover_image_url: string | null }
 type PageContent = { title: string; excerpt: string | null; body: string | null; cover_image_url: string | null }
+type MenuPage = { id: string; title: string; slug: string; section_name: string; menu_label: string; menu_order: number; external_url: string }
 
 export default function ContentPage({ path }: { path: string }) {
   const [events, setEvents] = useState<ChurchEvent[]>([])
@@ -11,6 +12,7 @@ export default function ContentPage({ path }: { path: string }) {
   const [news, setNews] = useState<PageContent | null>(null)
   const [category, setCategory] = useState('')
   const [dynamicPage, setDynamicPage] = useState<PageContent | null>(null)
+  const [menuPages, setMenuPages] = useState<MenuPage[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -41,6 +43,17 @@ export default function ContentPage({ path }: { path: string }) {
     return () => { active = false }
   }, [path])
 
+  useEffect(() => {
+    let active = true
+    async function loadMenu() {
+      if (!supabase) return
+      const { data } = await supabase.from('pages').select('id,title,slug,section_name,menu_label,menu_order,external_url').eq('status', 'published').eq('show_in_menu', true).order('menu_order').order('title')
+      if (active && data) setMenuPages(data as MenuPage[])
+    }
+    void loadMenu()
+    return () => { active = false }
+  }, [])
+
   const isAgenda = path === '/agenda'
   const isHistory = path === '/historia'
   const isDynamicPage = path.startsWith('/paginas/')
@@ -51,7 +64,7 @@ export default function ContentPage({ path }: { path: string }) {
     <div className="announcement"><span className="announcement-dot" /><span>Segunda Igreja Presbiteriana de Belo Horizonte</span></div>
     <header className="site-header">
       <a className="brand" href="/"><span className="brand-mark"><BookOpen size={24} /></span><span className="brand-copy"><strong>Segunda Igreja</strong><small>Presbiteriana de Belo Horizonte</small></span></a>
-      <nav className="main-nav subpage-nav"><a href="/">Início</a><a href="/historia">Nossa história</a><a href="/agenda">Agenda da igreja</a><a href="/#contato">Contato</a></nav>
+      <nav className="main-nav subpage-nav"><a href="/">Início</a><a href="/historia">Nossa história</a><a href="/agenda">Agenda</a>{Array.from(new Set(menuPages.map((page) => page.section_name?.trim() || 'Páginas'))).map((section) => <div className="nav-dropdown" key={section}><button className="nav-dropdown-trigger" type="button">{section}<span className="nav-chevron">⌄</span></button><div className="nav-dropdown-menu">{menuPages.filter((page) => (page.section_name?.trim() || 'Páginas') === section).map((page) => <a key={page.id} href={page.external_url?.trim() || '/paginas/' + page.slug} target={page.external_url?.trim() ? '_blank' : undefined} rel={page.external_url?.trim() ? 'noreferrer' : undefined}>{page.menu_label?.trim() || page.title}</a>)}</div></div>)}<a href="/#contato">Contato</a></nav>
     </header>
     <main className="content-page section-wrap">
       <a className="text-link back-link" href="/"><ArrowLeft size={15} /> Voltar à página inicial</a>
