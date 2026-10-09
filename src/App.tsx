@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from './lib/supabase'
 import ContentPage from './ContentPage'
 import {
-  ArrowDownRight,
   ArrowRight,
   BookOpen,
   CalendarDays,
