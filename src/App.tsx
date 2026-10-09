@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { supabase } from './lib/supabase'
 import {
   ArrowDownRight,
   ArrowRight,
@@ -25,6 +26,30 @@ const quickLinks = [
 
 function App() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [liveServiceTimes, setLiveServiceTimes] = useState<Array<{ day_of_week: string; starts_at: string; title: string; description?: string }>>([])
+  const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
+  const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
+  const [latestSermon, setLatestSermon] = useState<{ title: string; speaker: string; scripture: string; description: string; video_url: string } | null>(null)
+
+  useEffect(() => {
+    if (!supabase) return
+    let active = true
+    async function loadPublicContent() {
+      const [times, news, events, sermons] = await Promise.all([
+        supabase!.from('service_times').select('day_of_week,starts_at,title,description').eq('is_active', true).order('sort_order'),
+        supabase!.from('news_posts').select('id,title,excerpt,cover_image_url,category,slug').eq('status', 'published').order('published_at', { ascending: false }).limit(3),
+        supabase!.from('church_events').select('id,title,description,location,starts_at,cover_image_url').eq('status', 'published').gte('starts_at', new Date().toISOString()).order('starts_at').limit(3),
+        supabase!.from('sermons').select('title,speaker,scripture,description,video_url').eq('status', 'published').order('preached_at', { ascending: false }).limit(1),
+      ])
+      if (!active) return
+      if (!times.error && times.data) setLiveServiceTimes(times.data)
+      if (!news.error && news.data) setLatestNews(news.data)
+      if (!events.error && events.data) setUpcomingEvents(events.data)
+      if (!sermons.error && sermons.data?.[0]) setLatestSermon(sermons.data[0])
+    }
+    void loadPublicContent()
+    return () => { active = false }
+  }, [])
 
   const closeMenu = () => setMenuOpen(false)
 
@@ -108,6 +133,25 @@ function App() {
           </div>
         </section>
 
+        {(latestNews.length > 0 || upcomingEvents.length > 0) ? (
+          <section className="updates-section section-wrap" aria-label="Últimas notícias e próximos eventos">
+            {latestNews.length > 0 ? <div className="updates-block">
+              <div className="updates-heading"><div><span className="eyebrow"><span /> Fique por dentro</span><h2>Notícias da <em>comunidade.</em></h2></div></div>
+              <div className="updates-grid">{latestNews.map((item) => <article className="update-card" key={item.id}>
+                {item.cover_image_url ? <img src={item.cover_image_url} alt="" loading="lazy" /> : <div className="update-card-placeholder"><BookOpen size={24} /></div>}
+                <div className="update-card-body"><span className="update-category">{item.category}</span><h3>{item.title}</h3><p>{item.excerpt}</p><a className="text-link" href={'/noticias/' + item.slug}>Leia mais <ArrowRight size={15} /></a></div>
+              </article>)}</div>
+            </div> : null}
+            {upcomingEvents.length > 0 ? <div className="updates-block updates-events">
+              <div className="updates-heading"><div><span className="eyebrow"><span /> Participe</span><h2>Próximos <em>encontros.</em></h2></div></div>
+              <div className="updates-grid">{upcomingEvents.map((item) => <article className="update-card" key={item.id}>
+                {item.cover_image_url ? <img src={item.cover_image_url} alt="" loading="lazy" /> : <div className="update-card-placeholder"><CalendarDays size={24} /></div>}
+                <div className="update-card-body"><span className="update-category">{new Date(item.starts_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })} • {new Date(item.starts_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span><h3>{item.title}</h3><p>{item.description}</p>{item.location ? <p className="update-location">{item.location}</p> : null}</div>
+              </article>)}</div>
+            </div> : null}
+          </section>
+        ) : null}
+
         <section className="service-section section-wrap" id="agenda">
           <div className="service-intro">
             <span className="eyebrow"><span /> Venha nos visitar</span>
@@ -120,8 +164,8 @@ function App() {
               <span className="service-symbol"><Clock3 size={20} /></span>
               <div><span className="eyebrow">Programação</span><h3>Cultos e encontros</h3></div>
             </div>
-            {serviceTimes.map((service) => (
-              <div className="service-row" key={service.day}>
+            {(liveServiceTimes.length ? liveServiceTimes.map((item) => ({ day: item.day_of_week, time: item.starts_at.slice(0, 5), note: item.title })) : serviceTimes).map((service) => (
+              <div className="service-row" key={service.day + service.note}>
                 <div><strong>{service.day}</strong><span>{service.note}</span></div>
                 <span className="service-time">{service.time}</span>
               </div>
@@ -134,9 +178,9 @@ function App() {
           <div className="message-image" role="img" aria-label="Bíblia aberta sobre um banco de madeira" />
           <div className="message-content">
             <span className="eyebrow eyebrow-light"><span /> Palavra que edifica</span>
-            <h2>Uma fé que se fortalece<br /><em>ao ouvir a Palavra.</em></h2>
-            <p>Este espaço reunirá sermões, estudos e transmissões para você acompanhar e compartilhar.</p>
-            <a className="button button-outline-light" href="#contato">Acompanhe as mensagens <PlayCircle size={18} /></a>
+            <h2>{latestSermon ? latestSermon.title : <>Uma fé que se fortalece<br /><em>ao ouvir a Palavra.</em></>}</h2>
+            {latestSermon ? <><p>{latestSermon.speaker}{latestSermon.scripture ? ' • ' + latestSermon.scripture : ''}</p><p>{latestSermon.description}</p></> : <p>Este espaço reunirá sermões, estudos e transmissões para você acompanhar e compartilhar.</p>}
+            {latestSermon?.video_url ? <a className="button button-outline-light" href={latestSermon.video_url} target="_blank" rel="noreferrer">Assistir à mensagem <PlayCircle size={18} /></a> : <a className="button button-outline-light" href="#contato">Acompanhe as mensagens <PlayCircle size={18} /></a>}
           </div>
         </section>
 
