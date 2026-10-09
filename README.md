@@ -2,11 +2,11 @@
 
 Site institucional em desenvolvimento para a Segunda Igreja Presbiteriana de Belo Horizonte.
 
-## Stack planejada
+## Stack
 
 - React + TypeScript + Vite
 - CSS responsivo com identidade visual branca, azul e dourada
-- Supabase para autenticação, banco de dados e armazenamento (integração futura)
+- Supabase Auth planejado para login administrativo
 - GitHub para versionamento
 - Hospedagem a definir após os testes
 
@@ -26,13 +26,23 @@ npm run build
 npm run preview
 ```
 
-## Variáveis de ambiente
+## Configurar o Supabase
 
-Configure as variáveis do Supabase no ambiente local e no serviço de hospedagem depois de criar o projeto. Nunca envie chaves secretas para o GitHub.
+1. Crie um projeto Supabase para a igreja.
+2. Copie `.env.example` para `.env.local`.
+3. Preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` com a URL e a chave publicável/anon do projeto.
+4. Reinicie o servidor de desenvolvimento.
+
+Nunca coloque a chave `service_role` no frontend ou no GitHub. A conta administrativa deve receber a permissão no backend; não existe cadastro público de administradores.
 
 ## Situação atual
 
-A primeira página é um protótipo visual. Horários, contatos, endereço, links sociais e materiais institucionais precisam ser confirmados pela igreja antes da publicação. O painel administrativo e a integração com o Supabase ainda serão implementados.
+- Página inicial responsiva em protótipo.
+- Rota `/admin` com interface de login.
+- Cliente Supabase preparado, aguardando configuração do projeto.
+- Após conectar o Supabase, será necessário autorizar a conta administrativa e testar o login.
+- Dashboard de gestão de notícias, eventos, sermões e páginas ainda será implementado.
+- Endereço, horários, contatos, redes sociais e materiais oficiais precisam ser confirmados pela igreja antes da publicação.
 
 ## Identidade visual provisória
 
