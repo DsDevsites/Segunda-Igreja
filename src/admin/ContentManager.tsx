@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import type { FormEvent } from 'react'
 import { CalendarDays, Check, ChevronRight, FileText, Image, LoaderCircle, Newspaper, Plus, RefreshCw, Save, Settings2, Trash2, Video, Clock3, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
@@ -104,7 +105,7 @@ export default function ContentManager() {
     setEditing((current) => current ? { ...current, [name]: value } : current)
   }
 
-  async function saveRecord(event: React.FormEvent<HTMLFormElement>) {
+  async function saveRecord(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     if (!supabase || !editing) return
     setSaving(true)
