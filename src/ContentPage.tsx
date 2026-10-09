@@ -5,6 +5,7 @@ import { supabase } from './lib/supabase'
 type ChurchEvent = { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string | null; cover_image_url: string | null }
 type PageContent = { title: string; excerpt: string | null; body: string | null; cover_image_url: string | null }
 type MenuPage = { id: string; title: string; slug: string; section_name: string; menu_label: string; menu_order: number; external_url: string }
+type MenuSection = { id: string; label: string; sort_order: number; show_in_menu: boolean; is_dropdown: boolean; target_url: string }
 
 export default function ContentPage({ path }: { path: string }) {
   const [events, setEvents] = useState<ChurchEvent[]>([])
@@ -13,6 +14,7 @@ export default function ContentPage({ path }: { path: string }) {
   const [category, setCategory] = useState('')
   const [dynamicPage, setDynamicPage] = useState<PageContent | null>(null)
   const [menuPages, setMenuPages] = useState<MenuPage[]>([])
+  const [menuSections, setMenuSections] = useState<MenuSection[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -47,8 +49,12 @@ export default function ContentPage({ path }: { path: string }) {
     let active = true
     async function loadMenu() {
       if (!supabase) return
-      const { data } = await supabase.from('pages').select('id,title,slug,section_name,menu_label,menu_order,external_url').eq('status', 'published').eq('show_in_menu', true).order('menu_order').order('title')
-      if (active && data) setMenuPages(data as MenuPage[])
+      const [pagesResult, sectionsResult] = await Promise.all([
+        supabase.from('pages').select('id,title,slug,section_name,menu_label,menu_order,external_url').eq('status', 'published').eq('show_in_menu', true).order('menu_order').order('title'),
+        supabase.from('navigation_sections').select('id,label,sort_order,show_in_menu,is_dropdown,target_url').eq('show_in_menu', true).order('sort_order'),
+      ])
+      if (active && pagesResult.data) setMenuPages(pagesResult.data as MenuPage[])
+      if (active && sectionsResult.data) setMenuSections(sectionsResult.data as MenuSection[])
     }
     void loadMenu()
     return () => { active = false }
@@ -64,7 +70,7 @@ export default function ContentPage({ path }: { path: string }) {
     <div className="announcement"><span className="announcement-dot" /><span>Segunda Igreja Presbiteriana de Belo Horizonte</span></div>
     <header className="site-header">
       <a className="brand" href="/"><span className="brand-mark"><BookOpen size={24} /></span><span className="brand-copy"><strong>Segunda Igreja</strong><small>Presbiteriana de Belo Horizonte</small></span></a>
-      <nav className="main-nav subpage-nav"><a href="/">Início</a><a href="/historia">Nossa história</a><a href="/agenda">Agenda</a>{Array.from(new Set(menuPages.map((page) => page.section_name?.trim() || 'Páginas'))).map((section) => <div className="nav-dropdown" key={section}><button className="nav-dropdown-trigger" type="button">{section}<span className="nav-chevron">⌄</span></button><div className="nav-dropdown-menu">{menuPages.filter((page) => (page.section_name?.trim() || 'Páginas') === section).map((page) => <a key={page.id} href={page.external_url?.trim() || '/paginas/' + page.slug} target={page.external_url?.trim() ? '_blank' : undefined} rel={page.external_url?.trim() ? 'noreferrer' : undefined}>{page.menu_label?.trim() || page.title}</a>)}</div></div>)}<a href="/#contato">Contato</a></nav>
+      <nav className="main-nav subpage-nav"><a href="/">HOME</a>{menuSections.map((section) => { const links = menuPages.filter((page) => (page.section_name?.trim() || 'Páginas').toLocaleLowerCase('pt-BR') === section.label.trim().toLocaleLowerCase('pt-BR')); if (!section.is_dropdown) return <a key={section.id} href={section.target_url?.trim() || '/'}>{section.label}</a>; return <div className="nav-dropdown" key={section.id}><button className="nav-dropdown-trigger" type="button" aria-haspopup="true">{section.label}<span className="nav-chevron">⌄</span></button><div className="nav-dropdown-menu">{links.length ? links.map((page) => <a key={page.id} href={page.external_url?.trim() || '/paginas/' + page.slug} target={page.external_url?.trim() ? '_blank' : undefined} rel={page.external_url?.trim() ? 'noreferrer' : undefined}>{page.menu_label?.trim() || page.title}</a>) : <span className="nav-dropdown-empty">Links desta área serão adicionados pelo painel administrativo.</span>}</div></div>})}</nav>
     </header>
     <main className="content-page section-wrap">
       <a className="text-link back-link" href="/"><ArrowLeft size={15} /> Voltar à página inicial</a>
