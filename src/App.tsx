@@ -81,7 +81,7 @@ function App() {
     <div className="site-shell">
       <div className="announcement">
         <span className="announcement-dot" />
-        <span>Uma comunidade reunida pela fé, pela Palavra e pela comunhão.</span>
+        <span>SEGUNDA IGREJA PRESBITERIANA DE BELO HORIZONTE · FÉ, PALAVRA E COMUNHÃO</span>
       </div>
 
       <header className="site-header">
@@ -115,9 +115,9 @@ function App() {
           <div className="hero-image" role="img" aria-label="Interior de um templo iluminado pela luz natural" />
           <div className="hero-shade" />
           <div className="hero-content">
-            <span className="eyebrow eyebrow-light"><span /> Fé • Palavra • Comunhão</span>
-            <h1>Uma história de fé.<br /><em>Uma comunidade em Cristo.</em></h1>
-            <p>Um lugar para conhecer a Palavra, crescer na fé e caminhar em comunhão.</p>
+            <span className="eyebrow eyebrow-light"><span /> Bem-vindos à nossa comunidade</span>
+            <h1>Segunda Igreja<br /><em>Presbiteriana de Belo Horizonte</em></h1>
+            <p>Uma comunidade de fé, comprometida com a Palavra de Deus, a adoração e o serviço ao próximo.</p>
             <div className="hero-actions">
 
             </div>
