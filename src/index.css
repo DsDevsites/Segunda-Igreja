@@ -419,3 +419,124 @@ button { font: inherit; }
   .main-nav .nav-dropdown-menu a { padding: 10px 15px; }
   .main-nav .nav-dropdown-empty { padding: 10px 15px; }
 }
+
+
+/* Redesign institucional inspirado na organização visual da IPU; identidade e conteúdo próprios da Segunda Igreja */
+:root {
+  --blue: #173f69;
+  --blue-deep: #0e2e50;
+  --gold: #4d8cc5;
+  --gold-light: #d7e9f8;
+  --ink: #23394f;
+  --muted: #66788a;
+  --paper: #ffffff;
+  --soft: #f2f6fa;
+  --line: #dce5ee;
+}
+body { color: var(--ink); background: #fff; font-family: 'DM Sans', Arial, sans-serif; }
+.site-shell { overflow: clip; }
+.announcement { min-height: 32px; background: #12385f; color: #f4f8fc; font-size: 10px; font-weight: 600; letter-spacing: .08em; }
+.announcement-dot { background: #9ec8eb; }
+.site-header { max-width: 1200px; height: auto; min-height: 90px; padding: 17px 28px 0; display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; }
+.brand { gap: 13px; padding: 0 0 15px; }
+.brand-mark { width: 49px; height: 49px; border-radius: 5px; border: 0; background: #eaf2f9; color: var(--blue); }
+.brand-copy strong { font-size: 20px; color: var(--blue); }
+.brand-copy small { color: #64788b; font-size: 9px; letter-spacing: .09em; }
+.main-nav { flex: 0 0 calc(100% + 56px); width: calc(100% + 56px); margin: 0 -28px; padding: 0 28px; min-height: 48px; background: var(--blue); color: #fff; display: flex; align-items: stretch; gap: clamp(14px, 2.4vw, 30px); font-size: 11px; font-weight: 700; letter-spacing: .035em; }
+.main-nav > a:not(.nav-contact), .nav-dropdown-trigger { display: inline-flex; align-items: center; color: #fff; padding: 0; }
+.main-nav > a:not(.nav-contact):hover, .nav-dropdown-trigger:hover, .nav-dropdown:focus-within .nav-dropdown-trigger { color: #c6e1f8; }
+.nav-dropdown { align-items: stretch; }
+.nav-dropdown-trigger { padding: 0; }
+.nav-chevron { color: #c6e1f8; }
+.nav-dropdown-menu { top: 100%; left: 0; min-width: 240px; border-top: 3px solid #8bbce5; box-shadow: 0 12px 28px rgba(10, 35, 60, .2); }
+.nav-dropdown-menu a { color: #23425f; font-weight: 500; }
+.nav-dropdown-menu a:hover, .nav-dropdown-menu a:focus-visible { color: var(--blue); background: #edf5fb; }
+.hero { min-height: 475px; background: var(--blue-deep); }
+.hero-image { opacity: .52; background-position: center 44%; }
+.hero-shade { background: linear-gradient(90deg, rgba(9, 36, 64, .94) 0%, rgba(14, 47, 79, .78) 52%, rgba(14, 47, 79, .25) 100%); }
+.hero-content { width: min(100% - 48px, 1100px); padding: 76px 0 88px; }
+.eyebrow { color: #477eac; letter-spacing: .12em; }
+.eyebrow > span { background: #6c9fc9; }
+.eyebrow-light { color: #d5e9f9; }
+.eyebrow-light > span { background: #a6cfee; }
+.hero h1 { max-width: 780px; font-size: clamp(38px, 5.3vw, 64px); line-height: 1.12; letter-spacing: -.035em; }
+.hero h1 em, .welcome h2 em, .section-heading h2 em, .service-intro h2 em, .message-content h2 em, .contact-section h2 em { color: #8bbce5; }
+.hero-content > p { max-width: 610px; font-size: 16px; line-height: 1.8; color: #e0eaf3; }
+.hero-caption { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.section-wrap { width: min(100% - 48px, 1100px); }
+.welcome { padding-top: 72px; padding-bottom: 72px; gap: 64px; }
+.welcome h2, .section-heading h2, .service-intro h2, .contact-section h2 { color: #1b3e60; letter-spacing: -.025em; }
+.welcome h2 em, .section-heading h2 em, .service-intro h2 em, .contact-section h2 em { color: #4e83b2; }
+.welcome-copy .lead { color: #344e67; font-size: 18px; line-height: 1.7; }
+.text-link { color: #245b89; font-weight: 700; }
+.text-link:hover { color: #548bb8; }
+.quick-section { background: #f2f6fa; padding: 64px 0 72px; }
+.section-heading { margin-bottom: 30px; }
+.section-heading > p { color: #64788b; }
+.quick-grid { gap: 20px; }
+.quick-card { min-height: 250px; padding: 27px 25px; background: #fff; border: 1px solid #e0e8f0; border-radius: 3px; box-shadow: 0 3px 12px rgba(21, 55, 85, .035); }
+.quick-card:hover { transform: translateY(-3px); border-color: #a8c8e3; box-shadow: 0 12px 28px rgba(21, 55, 85, .08); }
+.quick-card-number { color: #a6c4df; }
+.quick-icon { background: #eaf3fa; color: #245b89; border-radius: 3px; }
+.quick-card h3 { color: #1b3e60; }
+.card-arrow { color: #245b89; }
+.updates-section { padding-top: 68px; padding-bottom: 70px; }
+.updates-block + .updates-block { margin-top: 64px; }
+.update-card { border: 1px solid #e0e8f0; border-radius: 3px; overflow: hidden; box-shadow: 0 4px 15px rgba(21, 55, 85, .045); }
+.update-card-image-link, .update-card > img, .update-card-placeholder { background: #eaf1f7; }
+.update-card-body { padding: 22px; }
+.update-category { color: #3977a8; }
+.update-card h3 a, .update-card h3 { color: #1b3e60; }
+.service-section { padding-top: 70px; padding-bottom: 75px; gap: 65px; }
+.service-card { border: 1px solid #dfe8f0; border-top: 4px solid var(--blue); border-radius: 3px; box-shadow: 0 6px 22px rgba(21, 55, 85, .06); }
+.service-symbol { background: #eaf3fa; color: #245b89; border-radius: 3px; }
+.service-row { border-bottom-color: #e5ecf2; }
+.service-time { color: #245b89; }
+.button-blue { background: var(--blue); border-radius: 3px; }
+.button-blue:hover { background: #245b89; }
+.message-section { background: #12385f; }
+.message-image { opacity: .27; }
+.message-section:after { background: linear-gradient(90deg, rgba(14, 46, 80, .99) 0%, rgba(18, 56, 95, .94) 60%, rgba(18, 56, 95, .8) 100%); }
+.message-content { max-width: 1100px; padding-top: 68px; padding-bottom: 68px; }
+.message-content h2 { font-size: clamp(32px, 4vw, 46px); }
+.sermon-item { border-color: rgba(255,255,255,.2); }
+.sermon-links a { color: #d7e9f8; }
+.contact-section { padding-top: 70px; padding-bottom: 72px; }
+.contact-placeholder { background: #f2f6fa; border: 1px solid #e0e8f0; border-radius: 3px; padding: 28px; }
+.contact-placeholder-row svg { color: #245b89; flex-shrink: 0; }
+.site-footer { background: #0e2e50; color: #e5edf5; }
+.brand-footer .brand-mark { background: rgba(255,255,255,.1); color: #d7e9f8; }
+.brand-footer .brand-copy strong { color: white; }
+.brand-footer .brand-copy small { color: #c0d1e1; }
+.footer-bottom { border-top-color: rgba(255,255,255,.18); color: #c0d1e1; }
+.footer-admin-link { color: #d7e9f8; }
+@media (max-width: 900px) {
+  .site-header { padding: 15px 22px 0; min-height: 78px; }
+  .brand { padding-bottom: 13px; }
+  .mobile-menu-button { display: block; margin: 0 0 13px auto; }
+  .main-nav { flex: 0 0 calc(100% + 44px); width: calc(100% + 44px); margin: 0 -22px; padding: 12px 22px 15px; min-height: 0; display: none; flex-direction: column; align-items: stretch; gap: 0; }
+  .main-nav.is-open { display: flex; }
+  .main-nav > a:not(.nav-contact) { padding: 12px 0; }
+  .main-nav .nav-dropdown { display: block; width: 100%; }
+  .main-nav .nav-dropdown-trigger { width: 100%; justify-content: space-between; padding: 12px 0; text-align: left; }
+  .main-nav .nav-dropdown-menu { position: static; display: none; min-width: 0; max-width: none; padding: 0 0 6px 10px; border-top: 0; border-left: 2px solid #8bbce5; box-shadow: none; }
+  .main-nav .nav-dropdown:hover .nav-dropdown-menu, .main-nav .nav-dropdown:focus-within .nav-dropdown-menu { display: block; }
+  .main-nav .nav-dropdown-menu a { padding: 10px 15px; }
+  .main-nav .nav-dropdown-empty { padding: 10px 15px; }
+  .hero { min-height: 410px; }
+  .hero-content { padding: 64px 0 76px; }
+  .welcome { gap: 25px; }
+}
+@media (max-width: 600px) {
+  .announcement { font-size: 9px; line-height: 1.5; }
+  .brand-copy strong { font-size: 17px; }
+  .brand-copy small { max-width: 210px; font-size: 8px; }
+  .hero h1 { font-size: clamp(34px, 10vw, 45px); }
+  .hero-content > p { font-size: 14px; }
+  .welcome, .updates-section, .service-section, .contact-section { padding-top: 48px; padding-bottom: 48px; }
+  .quick-section { padding: 48px 0; }
+  .quick-grid { grid-template-columns: 1fr; }
+  .quick-card { min-height: 215px; }
+  .message-content { padding-top: 48px; padding-bottom: 48px; }
+  .footer-main { gap: 20px; }
+}
