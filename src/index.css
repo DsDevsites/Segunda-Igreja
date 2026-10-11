@@ -540,3 +540,69 @@ body { color: var(--ink); background: #fff; font-family: 'DM Sans', Arial, sans-
   .message-content { padding-top: 48px; padding-bottom: 48px; }
   .footer-main { gap: 20px; }
 }
+
+
+/* Paleta oficial extraída da logo do Conselho de Presbíteras e Presbíteros */
+:root {
+  --blue: #456844;
+  --blue-deep: #31583b;
+  --gold: #83ad45;
+  --gold-light: #b9d84c;
+  --ink: #35513a;
+  --muted: #687b68;
+  --paper: #ffffff;
+  --soft: #f5f8f1;
+  --line: #e1e9dc;
+}
+body { color: var(--ink); background: #fff; }
+.announcement { background: #31583b; color: #f7faef; }
+.announcement-dot { background: #b9d84c; }
+.brand-mark { background: #f0f5e8; color: #456844; border-color: #83ad45; }
+.brand-copy strong, .welcome h2, .section-heading h2, .service-intro h2, .contact-section h2 { color: #31583b; }
+.brand-copy small { color: #687b68; }
+.main-nav { background: #456844; color: #fff; }
+.main-nav > a:not(.nav-contact), .nav-dropdown-trigger { color: #fff; }
+.main-nav > a:not(.nav-contact):hover, .nav-dropdown-trigger:hover, .nav-dropdown:focus-within .nav-dropdown-trigger { color: #d8ec9a; }
+.nav-chevron { color: #d8ec9a; }
+.nav-dropdown-menu { border-top-color: #b9d84c; }
+.nav-dropdown-menu a { color: #35513a; }
+.nav-dropdown-menu a:hover, .nav-dropdown-menu a:focus-visible { color: #31583b; background: #f0f5e8; }
+.hero { background: #31583b; }
+.hero-image { opacity: .48; }
+.hero-shade { background: linear-gradient(90deg, rgba(29, 62, 39, .94) 0%, rgba(49, 88, 59, .80) 52%, rgba(49, 88, 59, .28) 100%); }
+.eyebrow { color: #638747; }
+.eyebrow > span { background: #83ad45; }
+.eyebrow-light { color: #e2efc6; }
+.eyebrow-light > span { background: #b9d84c; }
+.hero h1 em, .welcome h2 em, .section-heading h2 em, .service-intro h2 em, .message-content h2 em, .contact-section h2 em { color: #b9d84c; }
+.hero-content > p { color: #edf3e7; }
+.welcome-copy .lead { color: #456844; }
+.text-link { color: #456844; }
+.text-link:hover { color: #83ad45; }
+.quick-section, .contact-placeholder { background: #f5f8f1; }
+.quick-card { border-color: #e1e9dc; }
+.quick-card:hover { border-color: #a9c27e; box-shadow: 0 12px 28px rgba(49, 88, 59, .08); }
+.quick-card-number { color: #a6c57a; }
+.quick-icon, .service-symbol { background: #edf4e5; color: #456844; }
+.quick-card h3, .update-card h3 a, .update-card h3 { color: #31583b; }
+.card-arrow, .update-category, .service-time { color: #638747; }
+.update-card { border-color: #e1e9dc; box-shadow: 0 4px 15px rgba(49, 88, 59, .05); }
+.update-card-image-link, .update-card > img, .update-card-placeholder { background: #edf4e5; }
+.service-card { border-color: #e1e9dc; border-top-color: #456844; box-shadow: 0 6px 22px rgba(49, 88, 59, .06); }
+.service-row { border-bottom-color: #e1e9dc; }
+.button-blue, .nav-contact { background: #456844; }
+.button-blue:hover, .nav-contact:hover { background: #31583b; }
+.message-section { background: #31583b; }
+.message-section:after { background: linear-gradient(90deg, rgba(29, 62, 39, .99) 0%, rgba(49, 88, 59, .94) 60%, rgba(49, 88, 59, .82) 100%); }
+.sermon-links a { color: #e2efc6; }
+.contact-placeholder { border-color: #e1e9dc; }
+.contact-placeholder-row svg { color: #456844; }
+.site-footer { background: #25472f; }
+.brand-footer .brand-mark { background: rgba(255,255,255,.1); color: #d8ec9a; }
+.brand-footer .brand-copy strong { color: #fff; }
+.brand-footer .brand-copy small { color: #d7e4cf; }
+.footer-bottom { border-top-color: rgba(255,255,255,.18); color: #d7e4cf; }
+.footer-admin-link { color: #d8ec9a; }
+@media (max-width: 900px) {
+  .main-nav .nav-dropdown-menu { border-left-color: #b9d84c; }
+}
