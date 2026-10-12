@@ -194,8 +194,6 @@ function App() {
             <h2>Mensagens para<br /><em>fortalecer a fé.</em></h2>
             <p>Acompanhe as mensagens bíblicas e continue refletindo sobre a Palavra durante a semana.</p>
             {sermons.length ? <div className="sermon-list">{sermons.map((sermon) => {
-              const youtubeId = sermon.video_url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/)?.[1]
-              const thumbnail = sermon.cover_image_url || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : '')
               return <article className="sermon-item" key={sermon.id}>
                 <div className="sermon-item-copy"><strong>{sermon.title}</strong><span>{[sermon.speaker, sermon.scripture].filter(Boolean).join(' • ')}</span>{sermon.description ? <p>{sermon.description}</p> : null}
                 <div className="sermon-links">{sermon.video_url ? <a href={sermon.video_url} target="_blank" rel="noreferrer" aria-label={'Assistir ' + sermon.title}><PlayCircle size={19} /> Vídeo</a> : null}{sermon.audio_url ? <a href={sermon.audio_url} target="_blank" rel="noreferrer" aria-label={'Ouvir ' + sermon.title}>Ouvir áudio</a> : null}</div></div>
