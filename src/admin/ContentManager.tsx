@@ -26,6 +26,7 @@ const resources: Resource[] = [
   ] },
   { key: 'site_settings', label: 'Contato e dados do site', singular: 'configuração de contato', icon: Settings2, description: 'Edite os dados exibidos na seção de contato do site. As alterações são salvas no perfil público da igreja.', fields: [
     { name: 'setting_key', label: 'Identificador do perfil', required: true, help: 'Mantenha o valor church_profile para atualizar os dados exibidos no site.' },
+    { name: 'logo_url', label: 'Logo do site', type: 'url', help: 'Envie o arquivo da logo ou cole uma URL pública. Ela será exibida no cabeçalho e no rodapé.' },
     { name: 'contact_heading', label: 'Título da seção de contato', help: 'Ex.: Vamos nos conhecer?' },
     { name: 'contact_text', label: 'Texto de apresentação', type: 'textarea', help: 'Texto exibido ao lado do cartão de endereço e contatos.' },
     { name: 'address', label: 'Endereço completo' },
@@ -127,7 +128,7 @@ export default function ContentManager() {
     setEditing((current) => current ? { ...current, [name]: value } : current)
   }
 
-  async function uploadImage(file: File) {
+  async function uploadImage(file: File, targetField: 'cover_image_url' | 'logo_url' = 'cover_image_url') {
     if (!supabase || !editing) return
     if (!file.type.startsWith('image/')) { setError('Selecione um arquivo de imagem.'); return }
     if (file.size > 10 * 1024 * 1024) { setError('A imagem deve ter no máximo 10 MB.'); return }
@@ -135,7 +136,7 @@ export default function ContentManager() {
     setError('')
     setNotice('')
     const safeName = file.name.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '-')
-    const path = `${activeKey}/${Date.now()}-${safeName || 'imagem'}`
+    const path = `${activeKey}/${Date.now()}-${targetField}-${safeName || 'imagem'}`
     const { error: uploadError } = await supabase.storage.from('church-media').upload(path, file, { upsert: false, contentType: file.type })
     setUploadingImage(false)
     if (uploadError) {
@@ -143,8 +144,8 @@ export default function ContentManager() {
       return
     }
     const { data } = supabase.storage.from('church-media').getPublicUrl(path)
-    updateField('cover_image_url', data.publicUrl)
-    setNotice('Imagem enviada. Salve o cadastro para aplicar a imagem ao conteúdo.')
+    updateField(targetField, data.publicUrl)
+    setNotice(targetField === 'logo_url' ? 'Logo enviada. Salve as alterações para atualizar a identidade do site.' : 'Imagem enviada. Salve o cadastro para aplicar a imagem ao conteúdo.')
   }
 
   async function saveRecord(event: FormEvent<HTMLFormElement>) {
@@ -156,7 +157,9 @@ export default function ContentManager() {
     const payload: Record<string, unknown> = {}
     if (activeKey === 'site_settings') {
       payload.setting_key = 'church_profile'
-      const profile: Record<string, string> = {}
+      const { data: existingSettings } = await supabase.from('site_settings').select('setting_value').eq('setting_key', 'church_profile').maybeSingle()
+      const existingProfile = existingSettings?.setting_value && typeof existingSettings.setting_value === 'object' ? existingSettings.setting_value as Record<string, unknown> : {}
+      const profile: Record<string, unknown> = { ...existingProfile }
       for (const field of resource.fields) {
         if (field.name !== 'setting_key') profile[field.name] = String(editing[field.name] ?? '').trim()
       }
@@ -238,7 +241,7 @@ export default function ContentManager() {
                 <span>{field.label}{field.required ? ' *' : ''}</span>
                 {field.type === 'textarea' || field.type === 'json' ? <textarea value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} rows={field.type === 'json' ? 8 : 4} spellCheck={field.type !== 'json'} />
                   : field.type === 'select' ? <select value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required}>{(field.options ?? []).map((option) => <option key={option} value={option}>{option === 'published' ? 'Publicado' : option === 'draft' ? 'Rascunho' : option === 'cancelled' ? 'Cancelado' : option === 'true' ? 'Sim' : option === 'false' ? 'Não' : option}</option>)}</select>
-                  : field.type === 'url' && field.name === 'cover_image_url' ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL da imagem ou envie um arquivo" /><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando imagem...' : 'JPG, PNG, WebP ou GIF · máximo 10 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <img src={String(editing[field.name])} alt="Pré-visualização da imagem" style={{ display: 'block', maxWidth: '220px', maxHeight: '140px', objectFit: 'cover', borderRadius: '8px', marginTop: '8px' }} /> : null}</>
+                  : field.type === 'url' && (field.name === 'cover_image_url' || field.name === 'logo_url') ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL da imagem ou envie um arquivo" /><input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file, field.name === 'logo_url' ? 'logo_url' : 'cover_image_url'); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando imagem...' : 'JPG, PNG, WebP, GIF ou SVG · máximo 10 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <img src={String(editing[field.name])} alt={field.name === 'logo_url' ? 'Pré-visualização da logo' : 'Pré-visualização da imagem'} style={{ display: 'block', maxWidth: field.name === 'logo_url' ? '260px' : '220px', maxHeight: '140px', objectFit: 'contain', borderRadius: '8px', marginTop: '8px' }} /> : null}</>
                   : <input type={field.type === 'number' ? 'number' : field.type ?? 'text'} value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} step={field.type === 'time' ? 60 : undefined} />}
                 {field.help ? <small>{field.help}</small> : null}
               </label>)}
