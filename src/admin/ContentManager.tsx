@@ -3,12 +3,20 @@ import type { FormEvent } from 'react'
 import { CalendarDays, Check, ChevronRight, FileText, Image, LoaderCircle, Newspaper, Plus, RefreshCw, Save, Settings2, Trash2, Video, Clock3, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings' | 'navigation_sections'
+type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings' | 'navigation_sections' | 'homepage_slides'
 type FieldType = 'text' | 'textarea' | 'url' | 'date' | 'datetime-local' | 'time' | 'number' | 'select' | 'json'
 type Field = { name: string; label: string; type?: FieldType; required?: boolean; options?: string[]; help?: string }
 type Resource = { key: ResourceKey; label: string; singular: string; icon: typeof Newspaper; description: string; fields: Field[] }
 
 const resources: Resource[] = [
+  { key: 'homepage_slides', label: 'Carrossel da página inicial', singular: 'slide do carrossel', icon: Image, description: 'Gerencie as imagens que passam lateralmente no início do site. Envie uma imagem, defina a ordem e ative o slide para publicá-lo.', fields: [
+    { name: 'title', label: 'Título sobre a imagem (opcional)', help: 'Deixe vazio se não quiser texto sobre a imagem.' },
+    { name: 'subtitle', label: 'Texto de apoio (opcional)', type: 'textarea' },
+    { name: 'cover_image_url', label: 'Imagem do slide', type: 'url', required: true, help: 'Prefira imagens horizontais. A prévia mantém a proporção e não corta a imagem.' },
+    { name: 'link_url', label: 'Link ao clicar na imagem (opcional)', type: 'url', help: 'Ex.: /agenda ou link para uma página publicada.' },
+    { name: 'sort_order', label: 'Ordem de exibição', type: 'number', required: true, help: 'Use 1 para a primeira imagem, 2 para a segunda e assim por diante.' },
+    { name: 'is_active', label: 'Mostrar no site?', type: 'select', options: ['true', 'false'], required: true },
+  ] },
   { key: 'news_posts', label: 'Notícias', singular: 'notícia', icon: Newspaper, description: 'Publicações e comunicados da igreja.', fields: [
     { name: 'title', label: 'Título', required: true }, { name: 'slug', label: 'Endereço amigável (slug)', required: true, help: 'Ex.: encontro-de-oracao' }, { name: 'excerpt', label: 'Resumo', type: 'textarea' }, { name: 'body', label: 'Conteúdo', type: 'textarea' }, { name: 'cover_image_url', label: 'URL da imagem de capa', type: 'url' }, { name: 'category', label: 'Categoria' }, { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published'], required: true },
   ] },
@@ -45,7 +53,7 @@ const resources: Resource[] = [
 function blankRecord(resource: Resource) {
   const value: Record<string, unknown> = {}
   resource.fields.forEach((field) => {
-    value[field.name] = field.name === 'setting_key' && resource.key === 'site_settings' ? 'church_profile' : field.name === 'status' ? (resource.key === 'pages' ? 'published' : 'draft') : field.name === 'category' ? 'Notícias' : field.name === 'is_active' ? 'false' : field.name === 'show_in_menu' ? (resource.key === 'navigation_sections' || resource.key === 'pages' ? 'true' : 'false') : field.name === 'is_dropdown' ? 'true' : field.name === 'sort_order' || field.name === 'menu_order' ? '0' : field.name === 'section_name' ? '' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
+    value[field.name] = field.name === 'setting_key' && resource.key === 'site_settings' ? 'church_profile' : field.name === 'status' ? (resource.key === 'pages' ? 'published' : 'draft') : field.name === 'category' ? 'Notícias' : field.name === 'is_active' ? (resource.key === 'homepage_slides' ? 'true' : 'false') : field.name === 'show_in_menu' ? (resource.key === 'navigation_sections' || resource.key === 'pages' ? 'true' : 'false') : field.name === 'is_dropdown' ? 'true' : field.name === 'sort_order' || field.name === 'menu_order' ? '0' : field.name === 'section_name' ? '' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
   })
   return value
 }
@@ -82,10 +90,10 @@ export default function ContentManager() {
     if (!supabase) return
     setLoading(true)
     setError('')
-    const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' ? 'sort_order' : activeKey === 'site_settings' ? 'setting_key' : 'created_at'
+    const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' || activeKey === 'homepage_slides' ? 'sort_order' : activeKey === 'site_settings' ? 'setting_key' : 'created_at'
     let query = supabase.from(activeKey as any).select('*')
     if (activeKey === 'site_settings') query = query.eq('setting_key', 'church_profile') as any
-    const { data, error: queryError } = await query.order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' })
+    const { data, error: queryError } = await query.order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' || activeKey === 'homepage_slides' })
     if (queryError) setError(queryError.message.includes('permission') || queryError.message.includes('row-level') ? 'A conta precisa ter a função administrativa configurada no Supabase.' : 'Não foi possível carregar os dados. Confira a conexão e as permissões.')
     setRows((data ?? []) as Record<string, unknown>[])
     setLoading(false)
