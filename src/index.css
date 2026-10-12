@@ -606,3 +606,32 @@ body { color: var(--ink); background: #fff; }
 @media (max-width: 900px) {
   .main-nav .nav-dropdown-menu { border-left-color: #b9d84c; }
 }
+
+
+/* Imagens de capa sem recorte/zoom: respeita a proporção original enviada */
+.content-page-cover {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+  object-position: center;
+  margin: 0 0 28px;
+  background: transparent;
+}
+/* Logo configurável pelo painel administrativo */
+.brand-logo {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(230px, 34vw);
+  max-height: 66px;
+  object-fit: contain;
+  object-position: left center;
+  flex: 0 1 auto;
+}
+.brand-footer .brand-logo { max-width: 200px; max-height: 58px; }
+@media (max-width: 600px) {
+  .brand-logo { max-width: min(165px, 39vw); max-height: 50px; }
+  .brand-footer .brand-logo { max-width: 160px; max-height: 48px; }
+}
