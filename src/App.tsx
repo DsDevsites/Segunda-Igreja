@@ -33,7 +33,7 @@ function App() {
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
   const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
-  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_text?: string; about_text?: string }>({})
+  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_text?: string; about_text?: string; contact_heading?: string; contact_text?: string }>({})
 
   useEffect(() => {
     if (!supabase) return
@@ -219,8 +219,8 @@ function App() {
         <section className="contact-section section-wrap" id="contato">
           <div>
             <span className="eyebrow"><span /> Estamos à disposição</span>
-            <h2>Vamos nos <em>conhecer?</em></h2>
-            <p>Fale com a equipe da igreja ou consulte o mapa para planejar sua visita. Os dados exibidos são os cadastrados pela administração.</p>
+            <h2>{profile.contact_heading || 'Vamos nos conhecer?'}</h2>
+            <p>{profile.contact_text || 'Fale com a equipe da igreja ou consulte o mapa para planejar sua visita.'}</p>
           </div>
           <div className="contact-placeholder">
             <div className="contact-placeholder-row"><MapPin size={19} /><span>{profile.address || 'Endereço será informado pela igreja'}</span></div>
