@@ -82,6 +82,8 @@ function App() {
 
   const closeMenu = () => setMenuOpen(false)
   const mapUrl = profile.maps_url || (profile.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(profile.address) : '')
+  const featuredVideoId = sermons[0]?.video_url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/)?.[1]
+  const featuredSermonThumbnail = sermons[0]?.cover_image_url || (featuredVideoId ? 'https://img.youtube.com/vi/' + featuredVideoId + '/hqdefault.jpg' : '')
 
   return (
     <div className="site-shell">
@@ -186,7 +188,7 @@ function App() {
         </section>
 
         <section className="message-section" id="mensagens">
-          <div className="message-image" role="img" aria-label="Bíblia aberta sobre um banco de madeira" />
+          <div className="message-image" role="img" aria-label={sermons[0]?.title ? "Imagem do vídeo: " + sermons[0].title : "Imagem das mensagens da igreja"} style={featuredSermonThumbnail ? { backgroundImage: "url(" + featuredSermonThumbnail + ")" } : undefined} />
           <div className="message-content">
             <span className="eyebrow eyebrow-light"><span /> Palavra que edifica</span>
             <h2>Mensagens para<br /><em>fortalecer a fé.</em></h2>
@@ -195,7 +197,6 @@ function App() {
               const youtubeId = sermon.video_url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/)?.[1]
               const thumbnail = sermon.cover_image_url || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : '')
               return <article className="sermon-item" key={sermon.id}>
-                {thumbnail ? <a className="sermon-thumbnail" href={sermon.video_url || '#mensagens'} target={sermon.video_url ? '_blank' : undefined} rel={sermon.video_url ? 'noreferrer' : undefined} aria-label={'Ver ' + sermon.title}><img src={thumbnail} alt={`Miniatura: ${sermon.title}`} loading="lazy" /><span><PlayCircle size={23} /></span></a> : null}
                 <div className="sermon-item-copy"><strong>{sermon.title}</strong><span>{[sermon.speaker, sermon.scripture].filter(Boolean).join(' • ')}</span>{sermon.description ? <p>{sermon.description}</p> : null}
                 <div className="sermon-links">{sermon.video_url ? <a href={sermon.video_url} target="_blank" rel="noreferrer" aria-label={'Assistir ' + sermon.title}><PlayCircle size={19} /> Vídeo</a> : null}{sermon.audio_url ? <a href={sermon.audio_url} target="_blank" rel="noreferrer" aria-label={'Ouvir ' + sermon.title}>Ouvir áudio</a> : null}</div></div>
               </article>
