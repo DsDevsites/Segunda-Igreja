@@ -495,7 +495,7 @@ body { color: var(--ink); background: #fff; font-family: 'DM Sans', Arial, sans-
 .button-blue { background: var(--blue); border-radius: 3px; }
 .button-blue:hover { background: #245b89; }
 .message-section { background: #12385f; }
-.message-image { opacity: .27; }
+.message-image { opacity: 1; background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #25472f; }
 .message-section:after { background: linear-gradient(90deg, rgba(14, 46, 80, .99) 0%, rgba(18, 56, 95, .94) 60%, rgba(18, 56, 95, .8) 100%); }
 .message-content { max-width: 1100px; padding-top: 68px; padding-bottom: 68px; }
 .message-content h2 { font-size: clamp(32px, 4vw, 46px); }
