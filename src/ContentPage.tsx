@@ -14,7 +14,8 @@ export default function ContentPage({ path }: { path: string }) {
   const [category, setCategory] = useState('')
   const [dynamicPage, setDynamicPage] = useState<PageContent | null>(null)
   const [menuPages, setMenuPages] = useState<MenuPage[]>([])
-  const [menuSections, setMenuSections] = useState<MenuSection[]>([])\n  const [logoUrl, setLogoUrl] = useState('')
+  const [menuSections, setMenuSections] = useState<MenuSection[]>([])
+  const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
