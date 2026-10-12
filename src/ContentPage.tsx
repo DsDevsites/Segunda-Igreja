@@ -14,7 +14,7 @@ export default function ContentPage({ path }: { path: string }) {
   const [category, setCategory] = useState('')
   const [dynamicPage, setDynamicPage] = useState<PageContent | null>(null)
   const [menuPages, setMenuPages] = useState<MenuPage[]>([])
-  const [menuSections, setMenuSections] = useState<MenuSection[]>([])
+  const [menuSections, setMenuSections] = useState<MenuSection[]>([])\n  const [logoUrl, setLogoUrl] = useState('')
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -49,12 +49,14 @@ export default function ContentPage({ path }: { path: string }) {
     let active = true
     async function loadMenu() {
       if (!supabase) return
-      const [pagesResult, sectionsResult] = await Promise.all([
+      const [pagesResult, sectionsResult, settingsResult] = await Promise.all([
         supabase.from('pages').select('id,title,slug,section_name,menu_label,menu_order,external_url').eq('status', 'published').eq('show_in_menu', true).order('menu_order').order('title'),
         supabase.from('navigation_sections').select('id,label,sort_order,show_in_menu,is_dropdown,target_url').eq('show_in_menu', true).order('sort_order'),
+        supabase.from('site_settings').select('setting_value').eq('setting_key', 'church_profile').maybeSingle(),
       ])
       if (active && pagesResult.data) setMenuPages(pagesResult.data as MenuPage[])
       if (active && sectionsResult.data) setMenuSections(sectionsResult.data as MenuSection[])
+      if (active && settingsResult.data?.setting_value && typeof settingsResult.data.setting_value === 'object') setLogoUrl(String((settingsResult.data.setting_value as Record<string, unknown>).logo_url || ''))
     }
     void loadMenu()
     return () => { active = false }
@@ -69,12 +71,12 @@ export default function ContentPage({ path }: { path: string }) {
   return <div className="site-shell">
     <div className="announcement"><span className="announcement-dot" /><span>Segunda Igreja Presbiteriana de Belo Horizonte</span></div>
     <header className="site-header">
-      <a className="brand" href="/"><span className="brand-mark"><BookOpen size={24} /></span><span className="brand-copy"><strong>Segunda Igreja</strong><small>Presbiteriana de Belo Horizonte</small></span></a>
+      <a className="brand" href="/">{logoUrl ? <img className="brand-logo" src={logoUrl} alt="Logo da Segunda Igreja" /> : <span className="brand-mark"><BookOpen size={24} /></span>}<span className="brand-copy"><strong>Segunda Igreja</strong><small>Presbiteriana de Belo Horizonte</small></span></a>
       <nav className="main-nav subpage-nav"><a href="/">HOME</a>{menuSections.map((section) => { const links = menuPages.filter((page) => (page.section_name?.trim() || 'Páginas').toLocaleLowerCase('pt-BR') === section.label.trim().toLocaleLowerCase('pt-BR')); if (!section.is_dropdown) return <a key={section.id} href={section.target_url?.trim() || '/'}>{section.label}</a>; return <div className="nav-dropdown" key={section.id}><button className="nav-dropdown-trigger" type="button" aria-haspopup="true">{section.label}<span className="nav-chevron">⌄</span></button><div className="nav-dropdown-menu">{links.length ? links.map((page) => <a key={page.id} href={page.external_url?.trim() || '/paginas/' + page.slug} target={page.external_url?.trim() ? '_blank' : undefined} rel={page.external_url?.trim() ? 'noreferrer' : undefined}>{page.menu_label?.trim() || page.title}</a>) : <span className="nav-dropdown-empty">Links desta área serão adicionados pelo painel administrativo.</span>}</div></div>})}</nav>
     </header>
     <main className="content-page section-wrap">
       <a className="text-link back-link" href="/"><ArrowLeft size={15} /> Voltar à página inicial</a>
-      <span className="eyebrow"><span /> {isAgenda ? 'Participe conosco' : isHistory ? 'Nossa caminhada de fé' : isDynamicPage ? 'Conheça a igreja' : category || 'Fique por dentro'}</span>
+      {!isDynamicPage ? <span className="eyebrow"><span /> {isAgenda ? 'Participe conosco' : isHistory ? 'Nossa caminhada de fé' : category || 'Fique por dentro'}</span> : null}
       <h1>{title}</h1>
       {content?.cover_image_url ? <img className="content-page-cover" src={content.cover_image_url} alt="" /> : null}
       {content?.excerpt ? <p className="content-page-lead">{content.excerpt}</p> : null}
@@ -87,6 +89,6 @@ export default function ContentPage({ path }: { path: string }) {
       </div> : loading ? <p>Carregando conteúdo...</p> : content?.body ? <div className="content-page-body">{content.body.split(/\n\n+/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : isHistory && !page ? <div className="content-page-body"><p>A história oficial da Segunda Igreja Presbiteriana de Belo Horizonte será publicada nesta página.</p><p>Para inserir ou editar o texto, acesse o painel administrativo, abra <strong>Páginas</strong> e crie uma página publicada com o endereço amigável (slug) <strong>historia</strong>. Você também pode adicionar um resumo e uma imagem de capa.</p></div> : <div className="calendar-empty"><BookOpen size={30} /><h2>Conteúdo não encontrado</h2><p>Esta publicação pode ter sido removida ou ainda não foi publicada.</p></div>}
       <div className="content-page-actions"><a className="button button-blue" href={isAgenda ? '/#contato' : '/agenda'}>{isAgenda ? 'Planeje sua visita' : 'Confira a programação'} <ArrowRight size={16} /></a></div>
     </main>
-    <footer className="site-footer"><div className="footer-bottom"><span>© {new Date().getFullYear()} Segunda Igreja Presbiteriana de Belo Horizonte</span><a href="/admin">Área administrativa</a></div></footer>
+    <footer className="site-footer"><div className="footer-bottom"><span>© {new Date().getFullYear()} Segunda Igreja Presbiteriana de Belo Horizonte</span></div></footer>
   </div>
 }
