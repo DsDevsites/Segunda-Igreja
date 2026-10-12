@@ -135,20 +135,6 @@ function App() {
         </> : null}
       </section> : null}
       <main>
-        <section className="hero" id="inicio">
-          <div className="hero-image" role="img" aria-label="Interior de um templo iluminado pela luz natural" />
-          <div className="hero-shade" />
-          <div className="hero-content">
-            <span className="eyebrow eyebrow-light"><span /> Bem-vindos à nossa comunidade</span>
-            <h1>Segunda Igreja<br /><em>Presbiteriana de Belo Horizonte</em></h1>
-            <p>Uma comunidade de fé, comprometida com a Palavra de Deus, a adoração e o serviço ao próximo.</p>
-            <div className="hero-actions">
-
-            </div>
-          </div>
-          <div className="hero-caption"><span className="caption-line" /> Segunda Igreja Presbiteriana de Belo Horizonte</div>
-        </section>
-
         <section className="welcome section-wrap" id="historia">
           <div className="welcome-heading">
             <span className="eyebrow"><span /> Seja bem-vindo</span>
@@ -158,29 +144,6 @@ function App() {
             <p className="lead">Somos uma comunidade que deseja glorificar a Deus, anunciar o evangelho de Jesus Cristo e viver a fé em comunhão.</p>
             <p>{profile.about_text || 'Somos uma igreja presbiteriana comprometida com as Escrituras, a adoração a Deus e o cuidado mútuo. Queremos caminhar com você na fé e na comunhão cristã.'}</p>
             <a className="text-link" href="/historia">Saiba mais sobre nós <ArrowRight size={16} /></a>
-          </div>
-        </section>
-
-        <section className="quick-section">
-          <div className="section-wrap">
-            <div className="section-heading">
-              <div>
-                <span className="eyebrow"><span /> Explore</span>
-                <h2>Conheça a vida da <em>igreja.</em></h2>
-              </div>
-              <p>Encontre informações, acompanhe as mensagens e participe da nossa programação.</p>
-            </div>
-            <div className="quick-grid">
-              {quickLinks.map(({ icon: Icon, title, text, href }, index) => (
-                <a className="quick-card" href={href} key={title}>
-                  <span className="quick-card-number">0{index + 1}</span>
-                  <span className="quick-icon"><Icon size={22} strokeWidth={1.6} /></span>
-                  <h3>{title}</h3>
-                  <p>{text}</p>
-                  <span className="card-arrow"><ArrowRight size={18} /></span>
-                </a>
-              ))}
-            </div>
           </div>
         </section>
 
