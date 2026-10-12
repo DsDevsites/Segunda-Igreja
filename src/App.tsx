@@ -33,7 +33,7 @@ function App() {
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
   const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
-  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_text?: string; about_text?: string; contact_heading?: string; contact_text?: string }>({})
+  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_text?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
 
   useEffect(() => {
     if (!supabase) return
@@ -86,7 +86,7 @@ function App() {
 
       <header className="site-header">
         <a className="brand" href="#inicio" aria-label="Segunda Igreja Presbiteriana - início" onClick={closeMenu}>
-          <span className="brand-mark"><Cross size={25} strokeWidth={1.7} /></span>
+          {profile.logo_url ? <img className="brand-logo" src={profile.logo_url} alt="Logo da Segunda Igreja" /> : <span className="brand-mark"><Cross size={25} strokeWidth={1.7} /></span>}
           <span className="brand-copy">
             <strong>Segunda Igreja</strong>
             <small>Presbiteriana de Belo Horizonte</small>
