@@ -31,7 +31,7 @@ function App() {
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
   const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
-  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_text?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
+  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_heading?: string; welcome_emphasis?: string; welcome_text?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
 
   useEffect(() => {
     if (!supabase) return
@@ -133,10 +133,10 @@ function App() {
         <section className="welcome section-wrap" id="historia">
           <div className="welcome-heading">
             <span className="eyebrow"><span /> Seja bem-vindo</span>
-            <h2>Tradição na fé.<br /><em>Esperança para hoje.</em></h2>
+            <h2>{profile.welcome_heading || 'Tradição na fé.'}<br /><em>{profile.welcome_emphasis || 'Esperança para hoje.'}</em></h2>
           </div>
           <div className="welcome-copy">
-            <p className="lead">Somos uma comunidade que deseja glorificar a Deus, anunciar o evangelho de Jesus Cristo e viver a fé em comunhão.</p>
+            <p className="lead">{profile.welcome_text || 'Somos uma comunidade que deseja glorificar a Deus, anunciar o evangelho de Jesus Cristo e viver a fé em comunhão.'}</p>
             <p>{profile.about_text || 'Somos uma igreja presbiteriana comprometida com as Escrituras, a adoração a Deus e o cuidado mútuo. Queremos caminhar com você na fé e na comunhão cristã.'}</p>
             <a className="text-link" href="/historia">Saiba mais sobre nós <ArrowRight size={16} /></a>
           </div>
