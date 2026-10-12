@@ -3,13 +3,19 @@ import type { FormEvent } from 'react'
 import { CalendarDays, Check, ChevronRight, FileText, Image, LoaderCircle, Newspaper, Plus, RefreshCw, Save, Settings2, Trash2, Video, Clock3, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings' | 'navigation_sections' | 'homepage_slides'
+type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings' | 'navigation_sections' | 'homepage_slides' | 'homepage_settings'
 type FieldType = 'text' | 'textarea' | 'url' | 'date' | 'datetime-local' | 'time' | 'number' | 'select' | 'json'
 type Field = { name: string; label: string; type?: FieldType; required?: boolean; options?: string[]; help?: string }
 type Resource = { key: ResourceKey; label: string; singular: string; icon: typeof Newspaper; description: string; fields: Field[] }
 
 const resources: Resource[] = [
-  { key: 'homepage_slides', label: 'Carrossel da página inicial', singular: 'slide do carrossel', icon: Image, description: 'Gerencie as imagens que passam lateralmente no início do site. Envie uma imagem, defina a ordem e ative o slide para publicá-lo.', fields: [
+  { key: 'homepage_settings', label: 'Página inicial', singular: 'conteúdo da página inicial', icon: Image, description: 'Edite apenas os textos de apresentação que aparecem na página inicial. Contatos, sermões, vídeos, notícias e eventos continuam em suas áreas próprias.', fields: [
+    { name: 'welcome_heading', label: 'Título principal', required: true, help: 'Ex.: Tradição na fé.' },
+    { name: 'welcome_emphasis', label: 'Título em destaque', required: true, help: 'Ex.: Esperança para hoje.' },
+    { name: 'welcome_text', label: 'Texto de apresentação', type: 'textarea', help: 'Texto curto que aparece na área de boas-vindas.' },
+    { name: 'about_text', label: 'Texto complementar', type: 'textarea', help: 'Parágrafo que apresenta a comunidade.' },
+  ] },
+  { key: 'homepage_slides', label: 'Slides do carrossel', singular: 'slide do carrossel', icon: Image, description: 'Gerencie as imagens que passam lateralmente no início do site. Envie uma imagem, defina a ordem e ative o slide para publicá-lo.', fields: [
     { name: 'title', label: 'Título sobre a imagem (opcional)', help: 'Deixe vazio se não quiser texto sobre a imagem.' },
     { name: 'subtitle', label: 'Texto de apoio (opcional)', type: 'textarea' },
     { name: 'cover_image_url', label: 'Imagem do slide', type: 'url', required: true, help: 'Prefira imagens horizontais. A prévia mantém a proporção e não corta a imagem.' },
@@ -90,10 +96,11 @@ export default function ContentManager() {
     if (!supabase) return
     setLoading(true)
     setError('')
-    const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' || activeKey === 'homepage_slides' ? 'sort_order' : activeKey === 'site_settings' ? 'setting_key' : 'created_at'
-    let query = supabase.from(activeKey as any).select('*')
-    if (activeKey === 'site_settings') query = query.eq('setting_key', 'church_profile') as any
-    const { data, error: queryError } = await query.order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' || activeKey === 'homepage_slides' })
+    const tableKey = activeKey === 'homepage_settings' ? 'site_settings' : activeKey
+    const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' || activeKey === 'homepage_slides' ? 'sort_order' : activeKey === 'site_settings' || activeKey === 'homepage_settings' ? 'setting_key' : 'created_at'
+    let query = supabase.from(tableKey as any).select('*')
+    if (activeKey === 'site_settings' || activeKey === 'homepage_settings') query = query.eq('setting_key', 'church_profile') as any
+    const { data, error: queryError } = await query.order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' || activeKey === 'homepage_settings' || activeKey === 'homepage_slides' })
     if (queryError) setError(queryError.message.includes('permission') || queryError.message.includes('row-level') ? 'A conta precisa ter a função administrativa configurada no Supabase.' : 'Não foi possível carregar os dados. Confira a conexão e as permissões.')
     setRows((data ?? []) as Record<string, unknown>[])
     setLoading(false)
@@ -119,7 +126,7 @@ export default function ContentManager() {
   function beginEdit(row: Record<string, unknown>) {
     const next: Record<string, unknown> = {}
     resource.fields.forEach((field) => {
-      if (activeKey === 'site_settings' && field.name !== 'setting_key') {
+      if ((activeKey === 'site_settings' || activeKey === 'homepage_settings') && field.name !== 'setting_key') {
         const profile = row.setting_value && typeof row.setting_value === 'object' ? row.setting_value as Record<string, unknown> : {}
         next[field.name] = toInputValue(field, profile[field.name])
       } else {
@@ -163,7 +170,7 @@ export default function ContentManager() {
     setError('')
     setNotice('')
     const payload: Record<string, unknown> = {}
-    if (activeKey === 'site_settings') {
+    if (activeKey === 'site_settings' || activeKey === 'homepage_settings') {
       payload.setting_key = 'church_profile'
       const { data: existingSettings } = await supabase.from('site_settings').select('setting_value').eq('setting_key', 'church_profile').maybeSingle()
       const existingProfile = existingSettings?.setting_value && typeof existingSettings.setting_value === 'object' ? existingSettings.setting_value as Record<string, unknown> : {}
@@ -187,9 +194,12 @@ export default function ContentManager() {
       }
     }
     if (resource.key === 'news_posts' && payload.status === 'published' && !editing.published_at) payload.published_at = new Date().toISOString()
-    const result = isCreating
-      ? await supabase.from(activeKey as any).insert(payload)
-      : await supabase.from(activeKey as any).update(payload).eq('id', editing.id)
+    const tableKey = activeKey === 'homepage_settings' ? 'site_settings' : activeKey
+    const result = activeKey === 'homepage_settings'
+      ? await supabase.from('site_settings').upsert(payload, { onConflict: 'setting_key' })
+      : isCreating
+        ? await supabase.from(tableKey as any).insert(payload)
+        : await supabase.from(tableKey as any).update(payload).eq('id', editing.id)
     setSaving(false)
     if (result.error) {
       setError(result.error.code === '23505' ? 'Já existe um item com esse identificador/slug. Escolha outro.' : 'Não foi possível salvar. Verifique os campos e se sua conta tem permissão administrativa.')
@@ -205,7 +215,8 @@ export default function ContentManager() {
     if (!supabase || !window.confirm('Tem certeza que deseja excluir este item? Essa ação não pode ser desfeita.')) return
     setError('')
     setNotice('')
-    const { error: deleteError } = await supabase.from(activeKey as any).delete().eq('id', row.id)
+    const tableKey = activeKey === 'homepage_settings' ? 'site_settings' : activeKey
+    const { error: deleteError } = await supabase.from(tableKey as any).delete().eq('id', row.id)
     if (deleteError) { setError('Não foi possível excluir. Confira se sua conta tem permissão administrativa.'); return }
     setNotice('Item excluído.')
     await loadRows()
@@ -218,24 +229,27 @@ export default function ContentManager() {
     if (row.status === 'cancelled') return 'Cancelado'
     if (row.is_active === true) return 'Ativo'
     if (row.is_active === false) return 'Inativo'
-    return activeKey === 'site_settings' ? 'Configuração' : 'Cadastrado'
+    return activeKey === 'site_settings' || activeKey === 'homepage_settings' ? 'Configuração' : 'Cadastrado'
   }
 
   return (
     <div className="cms-layout">
       <aside className="cms-sidebar">
         <div className="cms-sidebar-label">GERENCIAMENTO</div>
-        {resources.map((item) => {
+        <div className="cms-sidebar-label cms-sidebar-group">PÁGINA INICIAL</div>
+        {resources.filter((item) => item.key === 'homepage_settings' || item.key === 'homepage_slides').map((item) => {
           const Icon = item.icon
           return <button key={item.key} className={activeKey === item.key ? 'cms-nav-item is-active' : 'cms-nav-item'} onClick={() => chooseResource(item.key)}><Icon size={17} /><span>{item.label}</span><ChevronRight size={14} /></button>
         })}
+        <div className="cms-sidebar-label cms-sidebar-group">OUTROS CONTEÚDOS</div>
+        {resources.filter((item) => item.key !== 'homepage_settings' && item.key !== 'homepage_slides').map((item) => { const Icon = item.icon; return <button key={item.key} className={activeKey === item.key ? 'cms-nav-item is-active' : 'cms-nav-item'} onClick={() => chooseResource(item.key)}><Icon size={17} /><span>{item.label}</span><ChevronRight size={14} /></button> })}
         <div className="cms-sidebar-tip"><Image size={17} /><span>Envie imagens diretamente para o armazenamento seguro da igreja ou informe uma URL pública. Arquivos de até 10 MB.</span></div>
       </aside>
 
       <section className="cms-main">
         <div className="cms-heading">
           <div><span className="admin-kicker">CONTEÚDO DO SITE</span><h2>{resource.label}</h2><p>{resource.description}</p></div>
-          <div className="cms-heading-actions"><button className="cms-icon-button" onClick={() => void loadRows()} title="Atualizar lista"><RefreshCw size={17} /></button><button className="cms-primary-button" onClick={beginCreate}><Plus size={17} /> Novo item</button></div>
+          <div className="cms-heading-actions"><button className="cms-icon-button" onClick={() => void loadRows()} title="Atualizar lista"><RefreshCw size={17} /></button>{activeKey !== 'homepage_settings' ? <button className="cms-primary-button" onClick={beginCreate}><Plus size={17} /> Novo item</button> : null}</div>
         </div>
 
         {error ? <div className="cms-alert cms-alert-error" role="alert">{error}</div> : null}
@@ -259,7 +273,7 @@ export default function ContentManager() {
         ) : (
           <div className="cms-list-card">
             <div className="cms-list-top"><strong>{rows.length} {rows.length === 1 ? 'registro' : 'registros'}</strong><span>Somente a equipe autorizada pode alterar o conteúdo.</span></div>
-            {loading ? <div className="cms-empty"><LoaderCircle className="cms-spin" size={22} /><span>Carregando conteúdo...</span></div> : rows.length === 0 ? <div className="cms-empty"><FileText size={24} /><strong>Nenhum item cadastrado</strong><span>Use “Novo item” para adicionar o primeiro conteúdo.</span></div> : <div className="cms-record-list">{rows.map((row) => <article className="cms-record" key={String(row.id ?? row.setting_key)}><div className="cms-record-copy"><strong>{displayTitle(row)}</strong><span>{String(row.excerpt ?? row.description ?? row.speaker ?? row.day_of_week ?? row.slug ?? row.label ?? '')}</span><div className="cms-record-meta"><span className={row.status === 'published' || row.is_active === true ? 'cms-status is-published' : 'cms-status'}>{statusLabel(row)}</span>{row.starts_at && activeKey === 'church_events' ? <span>{formatDate(row.starts_at)}</span> : null}{row.created_at && activeKey !== 'site_settings' && activeKey !== 'service_times' ? <span>Criado em {formatDate(row.created_at)}</span> : null}</div></div><div className="cms-record-actions"><button className="cms-icon-button" onClick={() => beginEdit(row)} aria-label={'Editar ' + displayTitle(row)} title="Editar"><Settings2 size={16} /></button><button className="cms-icon-button cms-delete-button" onClick={() => void deleteRecord(row)} aria-label={'Excluir ' + displayTitle(row)} title="Excluir"><Trash2 size={16} /></button></div></article>)}</div>}
+            {loading ? <div className="cms-empty"><LoaderCircle className="cms-spin" size={22} /><span>Carregando conteúdo...</span></div> : rows.length === 0 ? <div className="cms-empty"><FileText size={24} /><strong>Nenhum item cadastrado</strong><span>{activeKey === 'homepage_settings' ? 'A configuração inicial será criada ao salvar os textos.' : 'Use “Novo item” para adicionar o primeiro conteúdo.'}</span>{activeKey === 'homepage_settings' ? <button className="cms-primary-button" onClick={() => { setEditing({ welcome_heading: 'Tradição na fé.', welcome_emphasis: 'Esperança para hoje.', welcome_text: '', about_text: '' }); setIsCreating(true) }}>Configurar página inicial</button> : null}</div> : <div className="cms-record-list">{rows.map((row) => <article className="cms-record" key={String(row.id ?? row.setting_key)}><div className="cms-record-copy"><strong>{displayTitle(row)}</strong><span>{String(row.excerpt ?? row.description ?? row.speaker ?? row.day_of_week ?? row.slug ?? row.label ?? '')}</span><div className="cms-record-meta"><span className={row.status === 'published' || row.is_active === true ? 'cms-status is-published' : 'cms-status'}>{statusLabel(row)}</span>{row.starts_at && activeKey === 'church_events' ? <span>{formatDate(row.starts_at)}</span> : null}{row.created_at && activeKey !== 'site_settings' && activeKey !== 'homepage_settings' && activeKey !== 'service_times' ? <span>Criado em {formatDate(row.created_at)}</span> : null}</div></div><div className="cms-record-actions"><button className="cms-icon-button" onClick={() => beginEdit(row)} aria-label={'Editar ' + displayTitle(row)} title="Editar"><Settings2 size={16} /></button>{activeKey !== 'homepage_settings' ? <button className="cms-icon-button cms-delete-button" onClick={() => void deleteRecord(row)} aria-label={'Excluir ' + displayTitle(row)} title="Excluir"><Trash2 size={16} /></button> : null}</div></article>)}</div>}
           </div>
         )}
         <p className="cms-demo-note">Ambiente de demonstração: confirme e substitua os dados fictícios antes de publicar o site.</p>
