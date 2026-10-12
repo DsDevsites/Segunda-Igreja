@@ -19,11 +19,6 @@ const serviceTimes = [
   { day: 'Durante a semana', time: 'Programação a confirmar', note: 'Estudos e encontros' },
 ]
 
-const quickLinks = [
-  { icon: BookOpen, title: 'Nossa história', text: 'Conheça nossa caminhada de fé e a história da nossa comunidade.', href: '/historia' },
-  { icon: PlayCircle, title: 'Mensagens', text: 'Acompanhe sermões, estudos bíblicos e transmissões.', href: '/#mensagens' },
-  { icon: CalendarDays, title: 'Agenda', text: 'Veja os encontros e eventos da vida da igreja.', href: '/agenda' },
-]
 
 function App() {
   const routePath = window.location.pathname
