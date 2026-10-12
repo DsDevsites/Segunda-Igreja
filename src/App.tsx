@@ -3,6 +3,7 @@ import { supabase } from './lib/supabase'
 import ContentPage from './ContentPage'
 import {
   ArrowRight,
+  ArrowLeft,
   BookOpen,
   CalendarDays,
   Clock3,
@@ -29,6 +30,8 @@ function App() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [liveServiceTimes, setLiveServiceTimes] = useState<Array<{ day_of_week: string; starts_at: string; title: string; description?: string }>>([])
   const [menuPages, setMenuPages] = useState<Array<{ id: string; title: string; slug: string; section_name: string; menu_label: string; menu_order: number; external_url: string }>>([])
+  const [homepageSlides, setHomepageSlides] = useState<Array<{ id: string; title: string; subtitle: string; cover_image_url: string; link_url: string; sort_order: number }>>([])
+  const [activeSlide, setActiveSlide] = useState(0)
   const [menuSections, setMenuSections] = useState<Array<{ id: string; label: string; sort_order: number; show_in_menu: boolean; is_dropdown: boolean; target_url: string }>>([])
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
@@ -39,7 +42,7 @@ function App() {
     if (!supabase) return
     let active = true
     async function loadPublicContent() {
-      const [times, news, events, sermonResult, settings, pagesResult, sectionsResult] = await Promise.all([
+      const [times, news, events, sermonResult, settings, pagesResult, sectionsResult, slidesResult] = await Promise.all([
         supabase!.from('service_times').select('day_of_week,starts_at,title,description').eq('is_active', true).order('sort_order'),
         supabase!.from('news_posts').select('id,title,excerpt,cover_image_url,category,slug').eq('status', 'published').order('published_at', { ascending: false }).limit(3),
         supabase!.from('church_events').select('id,title,description,location,starts_at,cover_image_url').eq('status', 'published').gte('starts_at', new Date().toISOString()).order('starts_at').limit(3),
@@ -47,6 +50,7 @@ function App() {
         supabase!.from('site_settings').select('setting_value').eq('setting_key', 'church_profile').maybeSingle(),
         supabase!.from('pages').select('id,title,slug,section_name,menu_label,menu_order,external_url').eq('status', 'published').eq('show_in_menu', true).order('menu_order').order('title'),
         supabase!.from('navigation_sections').select('id,label,sort_order,show_in_menu,is_dropdown,target_url').eq('show_in_menu', true).order('sort_order'),
+        supabase!.from('homepage_slides').select('id,title,subtitle,cover_image_url,link_url,sort_order').eq('is_active', true).order('sort_order').order('created_at'),
       ])
       if (!active) return
       if (!times.error && times.data) setLiveServiceTimes(times.data)
@@ -56,10 +60,17 @@ function App() {
       if (!settings.error && settings.data?.setting_value && typeof settings.data.setting_value === 'object') setProfile(settings.data.setting_value as typeof profile)
       if (!pagesResult.error && pagesResult.data) setMenuPages(pagesResult.data)
       if (!sectionsResult.error && sectionsResult.data) setMenuSections(sectionsResult.data)
+      if (!slidesResult.error && slidesResult.data) setHomepageSlides(slidesResult.data)
     }
     void loadPublicContent()
     return () => { active = false }
   }, [])
+
+  useEffect(() => {
+    if (homepageSlides.length < 2) return
+    const timer = window.setInterval(() => setActiveSlide((current) => (current + 1) % homepageSlides.length), 6000)
+    return () => window.clearInterval(timer)
+  }, [homepageSlides.length])
 
   useEffect(() => {
     document.title = 'Segunda Igreja Presbiteriana de Belo Horizonte'
@@ -110,6 +121,19 @@ function App() {
         </nav>
       </header>
 
+      {homepageSlides.length ? <section className="homepage-carousel" aria-label="Destaques da igreja">
+        <div className="carousel-track" style={{ transform: `translateX(-${activeSlide * 100}%)` }}>
+          {homepageSlides.map((slide) => <article className="carousel-slide" key={slide.id}>
+            {slide.link_url ? <a className="carousel-slide-link" href={slide.link_url} aria-label={slide.title || 'Abrir destaque'}><img src={slide.cover_image_url} alt={slide.title || 'Destaque da Segunda Igreja'} /></a> : <img src={slide.cover_image_url} alt={slide.title || 'Destaque da Segunda Igreja'} />}
+            {(slide.title || slide.subtitle) ? <div className="carousel-caption">{slide.title ? <h2>{slide.title}</h2> : null}{slide.subtitle ? <p>{slide.subtitle}</p> : null}</div> : null}
+          </article>)}
+        </div>
+        {homepageSlides.length > 1 ? <>
+          <button className="carousel-arrow carousel-prev" type="button" onClick={() => setActiveSlide((activeSlide - 1 + homepageSlides.length) % homepageSlides.length)} aria-label="Imagem anterior"><ArrowLeft size={19} /></button>
+          <button className="carousel-arrow carousel-next" type="button" onClick={() => setActiveSlide((activeSlide + 1) % homepageSlides.length)} aria-label="Próxima imagem"><ArrowRight size={19} /></button>
+          <div className="carousel-dots">{homepageSlides.map((slide, index) => <button key={slide.id} type="button" className={index === activeSlide ? 'is-active' : ''} onClick={() => setActiveSlide(index)} aria-label={`Ir para imagem ${index + 1}`} />)}</div>
+        </> : null}
+      </section> : null}
       <main>
         <section className="hero" id="inicio">
           <div className="hero-image" role="img" aria-label="Interior de um templo iluminado pela luz natural" />
@@ -209,10 +233,15 @@ function App() {
             <span className="eyebrow eyebrow-light"><span /> Palavra que edifica</span>
             <h2>Mensagens para<br /><em>fortalecer a fé.</em></h2>
             <p>Acompanhe as mensagens bíblicas e continue refletindo sobre a Palavra durante a semana.</p>
-            {sermons.length ? <div className="sermon-list">{sermons.map((sermon) => <article className="sermon-item" key={sermon.id}>
-              <div><strong>{sermon.title}</strong><span>{[sermon.speaker, sermon.scripture].filter(Boolean).join(' • ')}</span>{sermon.description ? <p>{sermon.description}</p> : null}</div>
-              <div className="sermon-links">{sermon.video_url ? <a href={sermon.video_url} target="_blank" rel="noreferrer" aria-label={'Assistir ' + sermon.title}><PlayCircle size={19} /> Vídeo</a> : null}{sermon.audio_url ? <a href={sermon.audio_url} target="_blank" rel="noreferrer" aria-label={'Ouvir ' + sermon.title}>Ouvir áudio</a> : null}</div>
-            </article>)}</div> : <p>As mensagens serão publicadas aqui pela equipe da igreja.</p>}
+            {sermons.length ? <div className="sermon-list">{sermons.map((sermon) => {
+              const youtubeId = sermon.video_url?.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/))([\w-]{11})/)?.[1]
+              const thumbnail = sermon.cover_image_url || (youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : '')
+              return <article className="sermon-item" key={sermon.id}>
+                {thumbnail ? <a className="sermon-thumbnail" href={sermon.video_url || '#mensagens'} target={sermon.video_url ? '_blank' : undefined} rel={sermon.video_url ? 'noreferrer' : undefined} aria-label={'Ver ' + sermon.title}><img src={thumbnail} alt={`Miniatura: ${sermon.title}`} loading="lazy" /><span><PlayCircle size={23} /></span></a> : null}
+                <div className="sermon-item-copy"><strong>{sermon.title}</strong><span>{[sermon.speaker, sermon.scripture].filter(Boolean).join(' • ')}</span>{sermon.description ? <p>{sermon.description}</p> : null}
+                <div className="sermon-links">{sermon.video_url ? <a href={sermon.video_url} target="_blank" rel="noreferrer" aria-label={'Assistir ' + sermon.title}><PlayCircle size={19} /> Vídeo</a> : null}{sermon.audio_url ? <a href={sermon.audio_url} target="_blank" rel="noreferrer" aria-label={'Ouvir ' + sermon.title}>Ouvir áudio</a> : null}</div></div>
+              </article>
+            })}</div> : <p>As mensagens serão publicadas aqui pela equipe da igreja.</p>}
           </div>
         </section>
 
@@ -238,7 +267,7 @@ function App() {
       <footer className="site-footer">
         <div className="footer-main">
           <a className="brand brand-footer" href="#inicio">
-            <span className="brand-mark"><Cross size={25} strokeWidth={1.7} /></span>
+            {profile.logo_url ? <img className="brand-logo" src={profile.logo_url} alt="Logo da Segunda Igreja" /> : <span className="brand-mark"><Cross size={25} strokeWidth={1.7} /></span>}
             <span className="brand-copy"><strong>Segunda Igreja</strong><small>Presbiteriana de Belo Horizonte</small></span>
           </a>
           <p>Fé, Palavra e comunhão.<br />Uma comunidade em Cristo.</p>
