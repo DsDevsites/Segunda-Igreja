@@ -24,8 +24,17 @@ const resources: Resource[] = [
   { key: 'service_times', label: 'Horários', singular: 'horário', icon: Clock3, description: 'Horários de cultos e encontros semanais.', fields: [
     { name: 'title', label: 'Nome da programação', required: true }, { name: 'day_of_week', label: 'Dia da semana', required: true }, { name: 'starts_at', label: 'Horário', type: 'time', required: true }, { name: 'description', label: 'Observação', type: 'textarea' }, { name: 'sort_order', label: 'Ordem de exibição' }, { name: 'is_active', label: 'Ativo?', type: 'select', options: ['true', 'false'], required: true },
   ] },
-  { key: 'site_settings', label: 'Configurações', singular: 'configuração', icon: Settings2, description: 'Dados gerais do site e textos principais.', fields: [
-    { name: 'setting_key', label: 'Identificador', required: true, help: 'Use church_profile para atualizar endereço, telefone, WhatsApp e redes sociais exibidos no site.' }, { name: 'setting_value', label: 'Configuração em JSON', type: 'json', required: true, help: 'Para church_profile, use chaves como address, phone, email, whatsapp (somente números com DDI/DDD), instagram_url, facebook_url, maps_url, about_text.' },
+  { key: 'site_settings', label: 'Contato e dados do site', singular: 'configuração de contato', icon: Settings2, description: 'Edite os dados exibidos na seção de contato do site. As alterações são salvas no perfil público da igreja.', fields: [
+    { name: 'setting_key', label: 'Identificador do perfil', required: true, help: 'Mantenha o valor church_profile para atualizar os dados exibidos no site.' },
+    { name: 'contact_heading', label: 'Título da seção de contato', help: 'Ex.: Vamos nos conhecer?' },
+    { name: 'contact_text', label: 'Texto de apresentação', type: 'textarea', help: 'Texto exibido ao lado do cartão de endereço e contatos.' },
+    { name: 'address', label: 'Endereço completo' },
+    { name: 'phone', label: 'Telefone' },
+    { name: 'email', label: 'E-mail de contato', type: 'text' },
+    { name: 'whatsapp', label: 'WhatsApp com DDI e DDD', help: 'Somente números. Ex.: 5531999999999.' },
+    { name: 'maps_url', label: 'Link do Google Maps', type: 'url' },
+    { name: 'instagram_url', label: 'Link do Instagram', type: 'url' },
+    { name: 'facebook_url', label: 'Link do Facebook', type: 'url' },
   ] },
   { key: 'navigation_sections', label: 'Menu do site', singular: 'área do menu', icon: Settings2, description: 'Crie, renomeie, ordene e oculte áreas do menu principal. Para adicionar links dentro de uma área, cadastre uma página com o mesmo nome em “Área do menu”.', fields: [
     { name: 'label', label: 'Nome da área', required: true, help: 'Ex.: IPU, DOCUMENTOS, PRESBITÉRIOS.' }, { name: 'sort_order', label: 'Ordem no menu', type: 'number', required: true }, { name: 'show_in_menu', label: 'Exibir no site?', type: 'select', options: ['true', 'false'], required: true }, { name: 'is_dropdown', label: 'Abrir lista de links?', type: 'select', options: ['true', 'false'], required: true }, { name: 'target_url', label: 'Destino se não abrir lista', type: 'url', help: 'Opcional. Usado quando “Abrir lista de links?” estiver como Não.' },
@@ -35,7 +44,7 @@ const resources: Resource[] = [
 function blankRecord(resource: Resource) {
   const value: Record<string, unknown> = {}
   resource.fields.forEach((field) => {
-    value[field.name] = field.name === 'status' ? 'draft' : field.name === 'category' ? 'Notícias' : field.name === 'is_active' ? 'false' : field.name === 'show_in_menu' ? (resource.key === 'navigation_sections' ? 'true' : 'false') : field.name === 'is_dropdown' ? 'true' : field.name === 'sort_order' || field.name === 'menu_order' ? '0' : field.name === 'section_name' ? 'Institucional' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
+    value[field.name] = field.name === 'setting_key' && resource.key === 'site_settings' ? 'church_profile' : field.name === 'status' ? 'draft' : field.name === 'category' ? 'Notícias' : field.name === 'is_active' ? 'false' : field.name === 'show_in_menu' ? (resource.key === 'navigation_sections' ? 'true' : 'false') : field.name === 'is_dropdown' ? 'true' : field.name === 'sort_order' || field.name === 'menu_order' ? '0' : field.name === 'section_name' ? 'Institucional' : field.type === 'json' ? '{\n  "is_demo": true\n}' : ''
   })
   return value
 }
@@ -73,7 +82,9 @@ export default function ContentManager() {
     setLoading(true)
     setError('')
     const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' ? 'sort_order' : activeKey === 'site_settings' ? 'setting_key' : 'created_at'
-    const { data, error: queryError } = await supabase.from(activeKey as any).select('*').order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' })
+    let query = supabase.from(activeKey as any).select('*')
+    if (activeKey === 'site_settings') query = query.eq('setting_key', 'church_profile') as any
+    const { data, error: queryError } = await query.order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' })
     if (queryError) setError(queryError.message.includes('permission') || queryError.message.includes('row-level') ? 'A conta precisa ter a função administrativa configurada no Supabase.' : 'Não foi possível carregar os dados. Confira a conexão e as permissões.')
     setRows((data ?? []) as Record<string, unknown>[])
     setLoading(false)
@@ -98,7 +109,14 @@ export default function ContentManager() {
 
   function beginEdit(row: Record<string, unknown>) {
     const next: Record<string, unknown> = {}
-    resource.fields.forEach((field) => { next[field.name] = ['show_in_menu', 'is_dropdown', 'is_active'].includes(field.name) ? String(Boolean(row[field.name])) : toInputValue(field, row[field.name]) })
+    resource.fields.forEach((field) => {
+      if (activeKey === 'site_settings' && field.name !== 'setting_key') {
+        const profile = row.setting_value && typeof row.setting_value === 'object' ? row.setting_value as Record<string, unknown> : {}
+        next[field.name] = toInputValue(field, profile[field.name])
+      } else {
+        next[field.name] = ['show_in_menu', 'is_dropdown', 'is_active'].includes(field.name) ? String(Boolean(row[field.name])) : toInputValue(field, row[field.name])
+      }
+    })
     setEditing({ ...next, id: row.id })
     setIsCreating(false)
     setNotice('')
@@ -136,17 +154,26 @@ export default function ContentManager() {
     setError('')
     setNotice('')
     const payload: Record<string, unknown> = {}
-    for (const field of resource.fields) {
-      const raw = editing[field.name]
-      if (field.type === 'json') {
-        try { payload[field.name] = JSON.parse(String(raw || '{}')) } catch { setError('O campo JSON contém um formato inválido.'); setSaving(false); return }
-      } else if (['is_active', 'show_in_menu', 'is_dropdown'].includes(field.name)) payload[field.name] = raw === 'true'
-      else if (['sort_order', 'menu_order'].includes(field.name)) payload[field.name] = Number(raw || 0)
-      else if (field.name === 'ends_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
-      else if (field.name === 'preached_at') payload[field.name] = raw || null
-      else if (field.name === 'starts_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
-      else if (field.name === 'published_at' && raw) payload[field.name] = raw
-      else payload[field.name] = raw ?? ''
+    if (activeKey === 'site_settings') {
+      payload.setting_key = 'church_profile'
+      const profile: Record<string, string> = {}
+      for (const field of resource.fields) {
+        if (field.name !== 'setting_key') profile[field.name] = String(editing[field.name] ?? '').trim()
+      }
+      payload.setting_value = profile
+    } else {
+      for (const field of resource.fields) {
+        const raw = editing[field.name]
+        if (field.type === 'json') {
+          try { payload[field.name] = JSON.parse(String(raw || '{}')) } catch { setError('O campo JSON contém um formato inválido.'); setSaving(false); return }
+        } else if (['is_active', 'show_in_menu', 'is_dropdown'].includes(field.name)) payload[field.name] = raw === 'true'
+        else if (['sort_order', 'menu_order'].includes(field.name)) payload[field.name] = Number(raw || 0)
+        else if (field.name === 'ends_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
+        else if (field.name === 'preached_at') payload[field.name] = raw || null
+        else if (field.name === 'starts_at' && resource.key === 'church_events') payload[field.name] = raw ? new Date(String(raw)).toISOString() : null
+        else if (field.name === 'published_at' && raw) payload[field.name] = raw
+        else payload[field.name] = raw ?? ''
+      }
     }
     if (resource.key === 'news_posts' && payload.status === 'published' && !editing.published_at) payload.published_at = new Date().toISOString()
     const result = isCreating
