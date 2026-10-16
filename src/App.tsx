@@ -132,7 +132,7 @@ function App() {
         </> : null}
       </section> : null}
       <main>
-        <section className="welcome section-wrap" id="historia">
+        <section className="welcome section-wrap" id="historia" style={profile.welcome_background_url ? { backgroundImage: `linear-gradient(rgba(255,255,255,.92), rgba(255,255,255,.92)), url("${profile.welcome_background_url}")`, backgroundSize: "cover", backgroundPosition: "center" } : undefined}>
           <div className="welcome-heading">
             <span className="eyebrow"><span /> Seja bem-vindo</span>
             <h2>{profile.welcome_heading || 'Tradição na fé.'}<br /><em>{profile.welcome_emphasis || 'Esperança para hoje.'}</em></h2>
