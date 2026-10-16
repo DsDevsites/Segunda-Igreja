@@ -9,10 +9,11 @@ type Field = { name: string; label: string; type?: FieldType; required?: boolean
 type Resource = { key: ResourceKey; label: string; singular: string; icon: typeof Newspaper; description: string; fields: Field[] }
 
 const resources: Resource[] = [
-  { key: 'homepage_settings', label: 'Página inicial', singular: 'conteúdo da página inicial', icon: Image, description: 'Edite apenas os textos de apresentação que aparecem na página inicial. Contatos, sermões, vídeos, notícias e eventos continuam em suas áreas próprias.', fields: [
+  { key: 'homepage_settings', label: 'Página inicial', singular: 'conteúdo da página inicial', icon: Image, description: 'Para mudar o título e os textos da primeira parte da página inicial, entre aqui. Também é aqui que você envia a foto suave de fundo da apresentação. Contatos, sermões, vídeos, notícias e eventos ficam separados.', fields: [
     { name: 'welcome_heading', label: 'Título principal', required: true, help: 'Ex.: Tradição na fé.' },
     { name: 'welcome_emphasis', label: 'Título em destaque', required: true, help: 'Ex.: Esperança para hoje.' },
     { name: 'welcome_text', label: 'Texto de apresentação', type: 'textarea', help: 'Texto curto que aparece na área de boas-vindas.' },
+    { name: 'welcome_background_url', label: 'Foto de fundo da apresentação', type: 'url', help: 'Envie uma foto da igreja. Ela ficará bem suave atrás dos textos da área “Seja bem-vindo”.' },
     { name: 'about_text', label: 'Texto complementar', type: 'textarea', help: 'Parágrafo que apresenta a comunidade.' },
   ] },
   { key: 'homepage_slides', label: 'Slides do carrossel', singular: 'slide do carrossel', icon: Image, description: 'Gerencie as imagens que passam lateralmente no início do site. Envie uma imagem, defina a ordem e ative o slide para publicá-lo.', fields: [
@@ -143,7 +144,7 @@ export default function ContentManager() {
     setEditing((current) => current ? { ...current, [name]: value } : current)
   }
 
-  async function uploadImage(file: File, targetField: 'cover_image_url' | 'logo_url' = 'cover_image_url') {
+  async function uploadImage(file: File, targetField: 'cover_image_url' | 'logo_url' | 'welcome_background_url' = 'cover_image_url') {
     if (!supabase || !editing) return
     if (!file.type.startsWith('image/')) { setError('Selecione um arquivo de imagem.'); return }
     if (file.size > 10 * 1024 * 1024) { setError('A imagem deve ter no máximo 10 MB.'); return }
@@ -263,7 +264,7 @@ export default function ContentManager() {
                 <span>{field.label}{field.required ? ' *' : ''}</span>
                 {field.type === 'textarea' || field.type === 'json' ? <textarea value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} rows={field.type === 'json' ? 8 : 4} spellCheck={field.type !== 'json'} />
                   : field.type === 'select' ? <select value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required}>{(field.options ?? []).map((option) => <option key={option} value={option}>{option === 'published' ? 'Publicado' : option === 'draft' ? 'Rascunho' : option === 'cancelled' ? 'Cancelado' : option === 'true' ? 'Sim' : option === 'false' ? 'Não' : option}</option>)}</select>
-                  : field.type === 'url' && (field.name === 'cover_image_url' || field.name === 'logo_url') ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL da imagem ou envie um arquivo" /><input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file, field.name === 'logo_url' ? 'logo_url' : 'cover_image_url'); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando imagem...' : 'JPG, PNG, WebP, GIF ou SVG · máximo 10 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <img src={String(editing[field.name])} alt={field.name === 'logo_url' ? 'Pré-visualização da logo' : 'Pré-visualização da imagem'} style={{ display: 'block', maxWidth: field.name === 'logo_url' ? '260px' : '220px', maxHeight: '140px', objectFit: 'contain', borderRadius: '8px', marginTop: '8px' }} /> : null}</>
+                  : field.type === 'url' && (field.name === 'cover_image_url' || field.name === 'logo_url' || field.name === 'welcome_background_url') ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL da imagem ou envie um arquivo" /><input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file, field.name === 'logo_url' ? 'logo_url' : field.name === 'welcome_background_url' ? 'welcome_background_url' : 'cover_image_url'); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando imagem...' : 'JPG, PNG, WebP, GIF ou SVG · máximo 10 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <img src={String(editing[field.name])} alt={field.name === 'logo_url' ? 'Pré-visualização da logo' : field.name === 'welcome_background_url' ? 'Pré-visualização da foto de fundo' : 'Pré-visualização da imagem'} style={{ display: 'block', maxWidth: field.name === 'logo_url' ? '260px' : '220px', maxHeight: '140px', objectFit: 'contain', borderRadius: '8px', marginTop: '8px' }} /> : null}</>
                   : <input type={field.type === 'number' ? 'number' : field.type ?? 'text'} value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} step={field.type === 'time' ? 60 : undefined} />}
                 {field.help ? <small>{field.help}</small> : null}
               </label>)}
