@@ -31,7 +31,7 @@ function App() {
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
   const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
-  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_heading?: string; welcome_emphasis?: string; welcome_text?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
+  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_heading?: string; welcome_emphasis?: string; welcome_text?: string; welcome_background_url?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
 
   useEffect(() => {
     if (!supabase) return
@@ -188,7 +188,8 @@ function App() {
         </section>
 
         <section className="message-section" id="mensagens">
-          <div className="message-image" role="img" aria-label={sermons[0]?.title ? "Imagem do vídeo: " + sermons[0].title : "Imagem das mensagens da igreja"} style={featuredSermonThumbnail ? { backgroundImage: "url(" + featuredSermonThumbnail + ")" } : undefined} />
+          <div className="message-image" role="img" aria-label={sermons[0]?.title ? "Miniatura do vídeo: " + sermons[0].title : "Imagem das mensagens da igreja"} style={featuredSermonThumbnail ? { backgroundImage: "url(" + featuredSermonThumbnail + ")" } : undefined} />
+          {sermons[0]?.video_url ? <a className="message-video-play" href={sermons[0].video_url} target="_blank" rel="noreferrer" aria-label={"Assistir " + sermons[0].title + " no YouTube"}><PlayCircle size={58} strokeWidth={1.8} /><span>Assistir no YouTube</span></a> : null}
           <div className="message-content">
             <span className="eyebrow eyebrow-light"><span /> Palavra que edifica</span>
             <h2>Mensagens para<br /><em>fortalecer a fé.</em></h2>
