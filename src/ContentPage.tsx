@@ -15,7 +15,7 @@ export default function ContentPage({ path }: { path: string }) {
   const [dynamicPage, setDynamicPage] = useState<PageContent | null>(null)
   const [menuPages, setMenuPages] = useState<MenuPage[]>([])
   const [menuSections, setMenuSections] = useState<MenuSection[]>([])
-  const [logoUrl, setLogoUrl] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')\n  const [socialLinks, setSocialLinks] = useState<{ instagram_url?: string; youtube_url?: string; tiktok_url?: string }>({})
   const [menuOpen, setMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -58,7 +58,7 @@ export default function ContentPage({ path }: { path: string }) {
       ])
       if (active && pagesResult.data) setMenuPages(pagesResult.data as MenuPage[])
       if (active && sectionsResult.data) setMenuSections(sectionsResult.data as MenuSection[])
-      if (active && settingsResult.data?.setting_value && typeof settingsResult.data.setting_value === 'object') setLogoUrl(String((settingsResult.data.setting_value as Record<string, unknown>).logo_url || ''))
+      if (active && settingsResult.data?.setting_value && typeof settingsResult.data.setting_value === 'object') setLogoUrl(String((settingsResult.data.setting_value as Record<string, unknown>).logo_url || '')); setSocialLinks(settingsResult.data.setting_value as typeof socialLinks)
     }
     void loadMenu()
     return () => { active = false }
@@ -75,7 +75,7 @@ export default function ContentPage({ path }: { path: string }) {
     <header className="site-header">
       <a className="brand" href="/">{logoUrl ? <img className="brand-logo" src={logoUrl} alt="Logo da Segunda Igreja" /> : <span className="brand-mark"><BookOpen size={24} /></span>}<span className="brand-copy"><strong>Segunda Igreja</strong><small>Presbiteriana de Belo Horizonte</small></span></a>
       <button className="mobile-menu-button" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}>{menuOpen ? <X size={23} /> : <Menu size={23} />}</button>
-      <nav className={menuOpen ? 'main-nav subpage-nav is-open' : 'main-nav subpage-nav'} aria-label="Navegação principal"><a href="/">HOME</a>{menuSections.map((section) => { const links = menuPages.filter((page) => (page.section_name?.trim() || 'Páginas').toLocaleLowerCase('pt-BR') === section.label.trim().toLocaleLowerCase('pt-BR')); if (!section.is_dropdown) return <a key={section.id} href={section.target_url?.trim() || '/'} onClick={() => setMenuOpen(false)}>{section.label}</a>; return <div className="nav-dropdown" key={section.id}><button className="nav-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false">{section.label}<span className="nav-chevron">⌄</span></button><div className="nav-dropdown-menu">{links.length ? links.map((page) => <a key={page.id} href={page.external_url?.trim() || '/paginas/' + page.slug} target={page.external_url?.trim() ? '_blank' : undefined} rel={page.external_url?.trim() ? 'noreferrer' : undefined} onClick={() => setMenuOpen(false)}>{page.menu_label?.trim() || page.title}</a>) : <span className="nav-dropdown-empty">Nenhum link cadastrado nesta área. Adicione páginas em Administração → Páginas e locais do menu.</span>}</div></div>})}</nav>
+      <nav className={menuOpen ? 'main-nav subpage-nav is-open' : 'main-nav subpage-nav'} aria-label="Navegação principal"><a href="/">HOME</a>{menuSections.map((section) => { const links = menuPages.filter((page) => (page.section_name?.trim() || 'Páginas').toLocaleLowerCase('pt-BR') === section.label.trim().toLocaleLowerCase('pt-BR')); if (!section.is_dropdown) return <a key={section.id} href={section.target_url?.trim() || '/'} onClick={() => setMenuOpen(false)}>{section.label}</a>; return <div className="nav-dropdown" key={section.id}><button className="nav-dropdown-trigger" type="button" aria-haspopup="true" aria-expanded="false">{section.label}<span className="nav-chevron">⌄</span></button><div className="nav-dropdown-menu">{/redes sociais/i.test(section.label) ? <>{socialLinks.instagram_url ? <a href={socialLinks.instagram_url} target="_blank" rel="noreferrer">Instagram</a> : null}{socialLinks.youtube_url ? <a href={socialLinks.youtube_url} target="_blank" rel="noreferrer">YouTube — acompanhe nossos sermões</a> : null}{socialLinks.tiktok_url ? <a href={socialLinks.tiktok_url} target="_blank" rel="noreferrer">TikTok</a> : null}{!socialLinks.instagram_url && !socialLinks.youtube_url && !socialLinks.tiktok_url ? <span className="nav-dropdown-empty">Cadastre as redes sociais no painel administrativo.</span> : null}</> : links.length ? links.map((page) => <a key={page.id} href={page.external_url?.trim() || '/paginas/' + page.slug} target={page.external_url?.trim() ? '_blank' : undefined} rel={page.external_url?.trim() ? 'noreferrer' : undefined} onClick={() => setMenuOpen(false)}>{page.menu_label?.trim() || page.title}</a>) : <span className="nav-dropdown-empty">Nenhum link cadastrado nesta área. Adicione páginas em Administração → Páginas e locais do menu.</span>}</div></div>})}</nav>
     </header>
     <main className="content-page section-wrap">
       <a className="text-link back-link" href="/"><ArrowLeft size={15} /> Voltar à página inicial</a>
