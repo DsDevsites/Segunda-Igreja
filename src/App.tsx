@@ -8,6 +8,8 @@ import {
   CalendarDays,
   Clock3,
   Cross,
+  FileText,
+  Instagram,
   MapPin,
   Menu,
   PlayCircle,
@@ -30,6 +32,7 @@ function App() {
   const [menuSections, setMenuSections] = useState<Array<{ id: string; label: string; sort_order: number; show_in_menu: boolean; is_dropdown: boolean; target_url: string }>>([])
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
+  const [bulletins, setBulletins] = useState<Array<{ id: string; title: string; description: string | null; pdf_url: string; published_at: string }>>([])
   const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
   const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; youtube_url?: string; tiktok_url?: string; facebook_url?: string; pastor_phone?: string; pastor_email?: string; maps_url?: string; welcome_heading?: string; welcome_emphasis?: string; welcome_text?: string; welcome_background_url?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
 
@@ -37,7 +40,7 @@ function App() {
     if (!supabase) return
     let active = true
     async function loadPublicContent() {
-      const [times, news, events, sermonResult, settings, pagesResult, sectionsResult, slidesResult] = await Promise.all([
+      const [times, news, events, sermonResult, settings, pagesResult, sectionsResult, slidesResult, bulletinsResult] = await Promise.all([
         supabase!.from('service_times').select('day_of_week,starts_at,title,description').eq('is_active', true).order('sort_order'),
         supabase!.from('news_posts').select('id,title,excerpt,cover_image_url,category,slug').eq('status', 'published').order('published_at', { ascending: false }).limit(3),
         supabase!.from('church_events').select('id,title,description,location,starts_at,cover_image_url').eq('status', 'published').gte('starts_at', new Date().toISOString()).order('starts_at').limit(3),
@@ -46,6 +49,7 @@ function App() {
         supabase!.from('pages').select('id,title,slug,section_name,menu_label,menu_order,external_url').eq('status', 'published').eq('show_in_menu', true).order('menu_order').order('title'),
         supabase!.from('navigation_sections').select('id,label,sort_order,show_in_menu,is_dropdown,target_url').eq('show_in_menu', true).order('sort_order'),
         supabase!.from('homepage_slides').select('id,title,subtitle,cover_image_url,link_url,sort_order').eq('is_active', true).order('sort_order').order('created_at'),
+        supabase!.from('bulletins').select('id,title,description,pdf_url,published_at').eq('status', 'published').order('published_at', { ascending: false }).limit(3),
       ])
       if (!active) return
       if (!times.error && times.data) setLiveServiceTimes(times.data)
@@ -56,6 +60,7 @@ function App() {
       if (!pagesResult.error && pagesResult.data) setMenuPages(pagesResult.data)
       if (!sectionsResult.error && sectionsResult.data) setMenuSections(sectionsResult.data)
       if (!slidesResult.error && slidesResult.data) setHomepageSlides(slidesResult.data)
+      if (!bulletinsResult.error && bulletinsResult.data) setBulletins(bulletinsResult.data)
     }
     void loadPublicContent()
     return () => { active = false }
@@ -200,6 +205,22 @@ function App() {
                 <div className="sermon-links">{sermon.video_url ? <a href={sermon.video_url} target="_blank" rel="noreferrer" aria-label={'Assistir ' + sermon.title}><PlayCircle size={19} /> Vídeo</a> : null}{sermon.audio_url ? <a href={sermon.audio_url} target="_blank" rel="noreferrer" aria-label={'Ouvir ' + sermon.title}>Ouvir áudio</a> : null}</div></div>
               </article>
             })}</div> : <p>As mensagens serão publicadas aqui pela equipe da igreja.</p>}
+          </div>
+        </section>
+
+        <section className="bulletins-home section-wrap" id="boletins">
+          <div className="updates-heading"><div><span className="eyebrow"><span /> Informativos semanais</span><h2>Boletins da <em>igreja.</em></h2></div><a className="text-link" href="/boletins">Ver todos os boletins <ArrowRight size={16} /></a></div>
+          {bulletins.length ? <div className="bulletins-home-grid">{bulletins.map((item) => <article className="bulletin-card" key={item.id}><div className="bulletin-date"><FileText size={21} /><span>{new Date(item.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span></div><h3>{item.title}</h3>{item.description ? <p>{item.description}</p> : null}<a className="button button-blue" href={item.pdf_url} target="_blank" rel="noreferrer">Ler boletim em PDF <ArrowRight size={16} /></a></article>)}</div> : <div className="bulletins-home-empty"><FileText size={24} /><p>Os boletins semanais serão exibidos aqui assim que forem publicados.</p></div>}
+        </section>
+
+        <section className="social-home section-wrap" id="redes-sociais">
+          <div><span className="eyebrow"><span /> Acompanhe a igreja</span><h2>Estamos nas <em>redes sociais.</em></h2><p>Acompanhe os cultos, mensagens e novidades da nossa comunidade.</p></div>
+          <div className="social-home-links">
+            {profile.instagram_url ? <a className="social-home-link" href={profile.instagram_url} target="_blank" rel="noreferrer"><Instagram size={22} /><span><strong>Instagram</strong><small>Acompanhe nossas novidades</small></span><ArrowRight size={17} /></a> : null}
+            {profile.youtube_url ? <a className="social-home-link" href={profile.youtube_url} target="_blank" rel="noreferrer"><PlayCircle size={22} /><span><strong>YouTube</strong><small>Sermões e mensagens</small></span><ArrowRight size={17} /></a> : null}
+            {profile.tiktok_url ? <a className="social-home-link" href={profile.tiktok_url} target="_blank" rel="noreferrer"><PlayCircle size={22} /><span><strong>TikTok</strong><small>Conteúdos da igreja</small></span><ArrowRight size={17} /></a> : null}
+            {profile.facebook_url ? <a className="social-home-link" href={profile.facebook_url} target="_blank" rel="noreferrer"><ArrowRight size={22} /><span><strong>Facebook</strong><small>Participe da comunidade</small></span><ArrowRight size={17} /></a> : null}
+            {!profile.instagram_url && !profile.youtube_url && !profile.tiktok_url && !profile.facebook_url ? <p>Os links das redes sociais poderão ser cadastrados no painel administrativo.</p> : null}
           </div>
         </section>
 
