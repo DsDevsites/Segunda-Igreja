@@ -3,19 +3,22 @@ import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, FileText, MapPin, Menu, 
 import { supabase } from './lib/supabase'
 
 type ChurchEvent = { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string | null; cover_image_url: string | null }
-type Bulletin = { id: string; title: string; description: string | null; pdf_url: string; published_at: string }\ntype PageContent = { title: string; excerpt: string | null; body: string | null; cover_image_url: string | null }
+type Bulletin = { id: string; title: string; description: string | null; pdf_url: string; published_at: string }
+type PageContent = { title: string; excerpt: string | null; body: string | null; cover_image_url: string | null }
 type MenuPage = { id: string; title: string; slug: string; section_name: string; menu_label: string; menu_order: number; external_url: string }
 type MenuSection = { id: string; label: string; sort_order: number; show_in_menu: boolean; is_dropdown: boolean; target_url: string }
 
 export default function ContentPage({ path }: { path: string }) {
-  const [events, setEvents] = useState<ChurchEvent[]>([])\n  const [bulletins, setBulletins] = useState<Bulletin[]>([])
+  const [events, setEvents] = useState<ChurchEvent[]>([])
+  const [bulletins, setBulletins] = useState<Bulletin[]>([])
   const [page, setPage] = useState<PageContent | null>(null)
   const [news, setNews] = useState<PageContent | null>(null)
   const [category, setCategory] = useState('')
   const [dynamicPage, setDynamicPage] = useState<PageContent | null>(null)
   const [menuPages, setMenuPages] = useState<MenuPage[]>([])
   const [menuSections, setMenuSections] = useState<MenuSection[]>([])
-  const [logoUrl, setLogoUrl] = useState('')\n  const [socialLinks, setSocialLinks] = useState<{ instagram_url?: string; youtube_url?: string; tiktok_url?: string }>({})
+  const [logoUrl, setLogoUrl] = useState('')
+  const [socialLinks, setSocialLinks] = useState<{ instagram_url?: string; youtube_url?: string; tiktok_url?: string }>({})
   const [menuOpen, setMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -23,7 +26,10 @@ export default function ContentPage({ path }: { path: string }) {
     let active = true
     async function load() {
       if (!supabase) { setLoading(false); return }
-      if (path === '/boletins') {\n        const { data } = await supabase.from('bulletins').select('id,title,description,pdf_url,published_at').eq('status', 'published').order('published_at', { ascending: false })\n        if (active && data) setBulletins(data as Bulletin[])\n      } else if (path === '/agenda') {
+      if (path === '/boletins') {
+        const { data } = await supabase.from('bulletins').select('id,title,description,pdf_url,published_at').eq('status', 'published').order('published_at', { ascending: false })
+        if (active && data) setBulletins(data as Bulletin[])
+      } else if (path === '/agenda') {
         const { data } = await supabase.from('church_events').select('id,title,description,location,starts_at,ends_at,cover_image_url').eq('status', 'published').gte('starts_at', new Date().toISOString()).order('starts_at')
         if (active && data) setEvents(data as ChurchEvent[])
       } else if (path === '/historia') {
@@ -64,7 +70,8 @@ export default function ContentPage({ path }: { path: string }) {
     return () => { active = false }
   }, [])
 
-  const isAgenda = path === '/agenda'\n  const isBulletins = path === '/boletins'
+  const isAgenda = path === '/agenda'
+  const isBulletins = path === '/boletins'
   const isHistory = path === '/historia'
   const isDynamicPage = path.startsWith('/paginas/')
   const content = isHistory ? page : isDynamicPage ? dynamicPage : news
@@ -89,7 +96,7 @@ export default function ContentPage({ path }: { path: string }) {
           <div className="calendar-event-main"><span className="update-category">{new Date(event.starts_at).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {new Date(event.starts_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}{event.ends_at ? ' – ' + new Date(event.ends_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}</span><h2>{event.title}</h2>{event.description ? <p>{event.description}</p> : null}{event.location ? <p className="calendar-location"><MapPin size={16} /> {event.location}</p> : null}</div>
           {event.cover_image_url ? <img src={event.cover_image_url} alt="" loading="lazy" /> : null}
         </article>) : <div className="calendar-empty"><CalendarDays size={30} /><h2>Nenhum evento publicado no momento</h2><p>Os próximos cultos especiais, encontros e atividades aparecerão aqui quando forem publicados no painel administrativo.</p></div>}
-      </div> : loading ? <p>Carregando conteúdo...</p> : content?.body ? <div className="content-page-body">{content.body.split(/\n\n+/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : isHistory && !page ? <div className="content-page-body"><p>A história oficial da Segunda Igreja Presbiteriana de Belo Horizonte será publicada nesta página.</p><p>Para inserir ou editar o texto, acesse o painel administrativo, abra <strong>Páginas</strong> e crie uma página publicada com o endereço amigável (slug) <strong>historia</strong>. Você também pode adicionar um resumo e uma imagem de capa.</p></div> : <div className="calendar-empty"><BookOpen size={30} /><h2>Conteúdo não encontrado</h2><p>Esta publicação pode ter sido removida ou ainda não foi publicada.</p></div>}
+      </div> : loading ? <p>Carregando conteúdo...</p> : content?.body ? <div className="content-page-body">{content.body.split(/\\n\\n+/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}</div> : isHistory && !page ? <div className="content-page-body"><p>A história oficial da Segunda Igreja Presbiteriana de Belo Horizonte será publicada nesta página.</p><p>Para inserir ou editar o texto, acesse o painel administrativo, abra <strong>Páginas</strong> e crie uma página publicada com o endereço amigável (slug) <strong>historia</strong>. Você também pode adicionar um resumo e uma imagem de capa.</p></div> : <div className="calendar-empty"><BookOpen size={30} /><h2>Conteúdo não encontrado</h2><p>Esta publicação pode ter sido removida ou ainda não foi publicada.</p></div>}
       <div className="content-page-actions"><a className="button button-blue" href={isAgenda ? '/#contato' : '/agenda'}>{isAgenda ? 'Planeje sua visita' : 'Confira a programação'} <ArrowRight size={16} /></a></div>
     </main>
     <footer className="site-footer"><div className="footer-bottom"><span>© {new Date().getFullYear()} Segunda Igreja Presbiteriana de Belo Horizonte</span></div></footer>
