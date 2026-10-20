@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, MapPin, Menu, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, FileText, MapPin, Menu, X } from 'lucide-react'
 import { supabase } from './lib/supabase'
 
 type ChurchEvent = { id: string; title: string; description: string | null; location: string | null; starts_at: string; ends_at: string | null; cover_image_url: string | null }
-type PageContent = { title: string; excerpt: string | null; body: string | null; cover_image_url: string | null }
+type Bulletin = { id: string; title: string; description: string | null; pdf_url: string; published_at: string }\ntype PageContent = { title: string; excerpt: string | null; body: string | null; cover_image_url: string | null }
 type MenuPage = { id: string; title: string; slug: string; section_name: string; menu_label: string; menu_order: number; external_url: string }
 type MenuSection = { id: string; label: string; sort_order: number; show_in_menu: boolean; is_dropdown: boolean; target_url: string }
 
 export default function ContentPage({ path }: { path: string }) {
-  const [events, setEvents] = useState<ChurchEvent[]>([])
+  const [events, setEvents] = useState<ChurchEvent[]>([])\n  const [bulletins, setBulletins] = useState<Bulletin[]>([])
   const [page, setPage] = useState<PageContent | null>(null)
   const [news, setNews] = useState<PageContent | null>(null)
   const [category, setCategory] = useState('')
@@ -23,7 +23,7 @@ export default function ContentPage({ path }: { path: string }) {
     let active = true
     async function load() {
       if (!supabase) { setLoading(false); return }
-      if (path === '/agenda') {
+      if (path === '/boletins') {\n        const { data } = await supabase.from('bulletins').select('id,title,description,pdf_url,published_at').eq('status', 'published').order('published_at', { ascending: false })\n        if (active && data) setBulletins(data as Bulletin[])\n      } else if (path === '/agenda') {
         const { data } = await supabase.from('church_events').select('id,title,description,location,starts_at,ends_at,cover_image_url').eq('status', 'published').gte('starts_at', new Date().toISOString()).order('starts_at')
         if (active && data) setEvents(data as ChurchEvent[])
       } else if (path === '/historia') {
@@ -64,11 +64,11 @@ export default function ContentPage({ path }: { path: string }) {
     return () => { active = false }
   }, [])
 
-  const isAgenda = path === '/agenda'
+  const isAgenda = path === '/agenda'\n  const isBulletins = path === '/boletins'
   const isHistory = path === '/historia'
   const isDynamicPage = path.startsWith('/paginas/')
   const content = isHistory ? page : isDynamicPage ? dynamicPage : news
-  const title = isAgenda ? 'Agenda da igreja' : isHistory ? page?.title || 'A história da nossa igreja' : isDynamicPage ? dynamicPage?.title || 'Página' : news?.title || 'Notícia da comunidade'
+  const title = isBulletins ? 'Boletins da igreja' : isAgenda ? 'Agenda da igreja' : isHistory ? page?.title || 'A história da nossa igreja' : isDynamicPage ? dynamicPage?.title || 'Página' : news?.title || 'Notícia da comunidade'
 
   return <div className="site-shell">
     <div className="announcement"><span className="announcement-dot" /><span>Segunda Igreja Presbiteriana de Belo Horizonte</span></div>
@@ -79,11 +79,11 @@ export default function ContentPage({ path }: { path: string }) {
     </header>
     <main className="content-page section-wrap">
       <a className="text-link back-link" href="/"><ArrowLeft size={15} /> Voltar à página inicial</a>
-      {!isDynamicPage ? <span className="eyebrow"><span /> {isAgenda ? 'Participe conosco' : isHistory ? 'Nossa caminhada de fé' : category || 'Fique por dentro'}</span> : null}
+      {!isDynamicPage ? <span className="eyebrow"><span /> {isBulletins ? 'Informativos semanais' : isAgenda ? 'Participe conosco' : isHistory ? 'Nossa caminhada de fé' : category || 'Fique por dentro'}</span> : null}
       <h1>{title}</h1>
       {content?.cover_image_url ? <img className="content-page-cover" src={content.cover_image_url} alt="" /> : null}
       {content?.excerpt ? <p className="content-page-lead">{content.excerpt}</p> : null}
-      {isAgenda ? <div className="calendar-list">
+      {isBulletins ? <div className="bulletins-list">{loading ? <p>Carregando boletins...</p> : bulletins.length ? bulletins.map((item) => <article className="bulletin-card" key={item.id}><div className="bulletin-date"><CalendarDays size={22} /><span>{new Date(item.published_at).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</span></div><h2>{item.title}</h2>{item.description ? <p>{item.description}</p> : null}<a className="button button-blue" href={item.pdf_url} target="_blank" rel="noreferrer">Abrir boletim em PDF <ArrowRight size={16} /></a></article>) : <div className="calendar-empty"><FileText size={30} /><h2>Nenhum boletim publicado ainda</h2><p>Os informativos semanais aparecerão aqui quando forem publicados pela equipe da igreja.</p></div>}</div> : isAgenda ? <div className="calendar-list">
         {loading ? <p>Carregando a programação...</p> : events.length ? events.map((event) => <article className="calendar-event" key={event.id}>
           <div className="calendar-date"><strong>{new Date(event.starts_at).toLocaleDateString('pt-BR', { day: '2-digit' })}</strong><span>{new Date(event.starts_at).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span></div>
           <div className="calendar-event-main"><span className="update-category">{new Date(event.starts_at).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {new Date(event.starts_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}{event.ends_at ? ' – ' + new Date(event.ends_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : ''}</span><h2>{event.title}</h2>{event.description ? <p>{event.description}</p> : null}{event.location ? <p className="calendar-location"><MapPin size={16} /> {event.location}</p> : null}</div>
