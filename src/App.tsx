@@ -31,7 +31,7 @@ function App() {
   const [latestNews, setLatestNews] = useState<Array<{ id: string; title: string; excerpt: string; cover_image_url: string; category: string; slug: string }>>([])
   const [upcomingEvents, setUpcomingEvents] = useState<Array<{ id: string; title: string; description: string; location: string; starts_at: string; cover_image_url: string }>>([])
   const [sermons, setSermons] = useState<Array<{ id: string; title: string; speaker: string; scripture: string; description: string; video_url: string; audio_url?: string; preached_at?: string; cover_image_url?: string }>>([])
-  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; facebook_url?: string; maps_url?: string; welcome_heading?: string; welcome_emphasis?: string; welcome_text?: string; welcome_background_url?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
+  const [profile, setProfile] = useState<{ address?: string; phone?: string; email?: string; whatsapp?: string; instagram_url?: string; youtube_url?: string; tiktok_url?: string; facebook_url?: string; pastor_phone?: string; pastor_email?: string; maps_url?: string; welcome_heading?: string; welcome_emphasis?: string; welcome_text?: string; welcome_background_url?: string; about_text?: string; contact_heading?: string; contact_text?: string; logo_url?: string }>({})
 
   useEffect(() => {
     if (!supabase) return
@@ -78,7 +78,7 @@ function App() {
     description.setAttribute('content', 'Conheça a Segunda Igreja Presbiteriana de Belo Horizonte: cultos, mensagens bíblicas, agenda e vida em comunidade.')
   }, [])
 
-  if (routePath === '/agenda' || routePath === '/historia' || routePath.startsWith('/noticias/') || routePath.startsWith('/paginas/')) return <ContentPage path={routePath} />
+  if (routePath === '/agenda' || routePath === '/historia' || routePath === '/boletins' || routePath.startsWith('/noticias/') || routePath.startsWith('/paginas/')) return <ContentPage path={routePath} />
 
   const closeMenu = () => setMenuOpen(false)
   const mapUrl = profile.maps_url || (profile.address ? 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(profile.address) : '')
@@ -215,7 +215,10 @@ function App() {
             {profile.email ? <div className="contact-placeholder-row"><span>E-mail: {profile.email}</span></div> : null}
             {profile.whatsapp ? <a className="text-link" href={'https://wa.me/' + profile.whatsapp.replace(/\\D/g, '')} target="_blank" rel="noreferrer">Fale pelo WhatsApp <ArrowRight size={16} /></a> : null}
             {mapUrl ? <a className="text-link" href={mapUrl} target="_blank" rel="noreferrer">Ver no mapa <MapPin size={16} /></a> : null}
+            {(profile.pastor_phone || profile.pastor_email) ? <div className="pastor-contact-card"><h3>Fale com o pastor</h3>{profile.pastor_phone ? <p>Telefone: <a href={'tel:' + profile.pastor_phone.replace(/[^+\\d]/g, '')}>{profile.pastor_phone}</a></p> : null}{profile.pastor_email ? <p>E-mail: <a href={'mailto:' + profile.pastor_email}>{profile.pastor_email}</a></p> : null}</div> : null}
             {profile.instagram_url ? <a className="text-link" href={profile.instagram_url} target="_blank" rel="noreferrer">Instagram <ArrowRight size={16} /></a> : null}
+            {profile.youtube_url ? <a className="text-link" href={profile.youtube_url} target="_blank" rel="noreferrer">YouTube — acompanhe nossos sermões <PlayCircle size={16} /></a> : null}
+            {profile.tiktok_url ? <a className="text-link" href={profile.tiktok_url} target="_blank" rel="noreferrer">TikTok <ArrowRight size={16} /></a> : null}
             {profile.facebook_url ? <a className="text-link" href={profile.facebook_url} target="_blank" rel="noreferrer">Facebook <ArrowRight size={16} /></a> : null}
             <a className="text-link" href="#inicio">Voltar ao início <ArrowRight size={16} /></a>
           </div>
