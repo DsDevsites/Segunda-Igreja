@@ -3,7 +3,7 @@ import type { FormEvent } from 'react'
 import { CalendarDays, Check, ChevronRight, FileText, Image, LoaderCircle, Newspaper, Plus, RefreshCw, Save, Settings2, Trash2, Video, Clock3, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 
-type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings' | 'navigation_sections' | 'homepage_slides' | 'homepage_settings'
+type ResourceKey = 'news_posts' | 'church_events' | 'sermons' | 'pages' | 'service_times' | 'site_settings' | 'navigation_sections' | 'homepage_slides' | 'homepage_settings' | 'bulletins'
 type FieldType = 'text' | 'textarea' | 'url' | 'date' | 'datetime-local' | 'time' | 'number' | 'select' | 'json'
 type Field = { name: string; label: string; type?: FieldType; required?: boolean; options?: string[]; help?: string }
 type Resource = { key: ResourceKey; label: string; singular: string; icon: typeof Newspaper; description: string; fields: Field[] }
@@ -24,6 +24,7 @@ const resources: Resource[] = [
     { name: 'sort_order', label: 'Ordem de exibição', type: 'number', required: true, help: 'Use 1 para a primeira imagem, 2 para a segunda e assim por diante.' },
     { name: 'is_active', label: 'Mostrar no site?', type: 'select', options: ['true', 'false'], required: true },
   ] },
+  { key: 'bulletins', label: 'Boletins semanais', singular: 'boletim', icon: FileText, description: 'Publique o PDF informativo de cada semana. Apenas boletins publicados aparecem na página pública.', fields: [ { name: 'title', label: 'Título do boletim', required: true }, { name: 'description', label: 'Descrição', type: 'textarea' }, { name: 'pdf_url', label: 'Arquivo PDF', type: 'url', required: true, help: 'Envie o PDF ou cole uma URL pública do arquivo.' }, { name: 'published_at', label: 'Data de publicação', type: 'date', required: true }, { name: 'status', label: 'Publicação', type: 'select', options: ['draft', 'published'], required: true } ] },
   { key: 'news_posts', label: 'Notícias', singular: 'notícia', icon: Newspaper, description: 'Publicações e comunicados da igreja.', fields: [
     { name: 'title', label: 'Título', required: true }, { name: 'slug', label: 'Endereço amigável (slug)', required: true, help: 'Ex.: encontro-de-oracao' }, { name: 'excerpt', label: 'Resumo', type: 'textarea' }, { name: 'body', label: 'Conteúdo', type: 'textarea' }, { name: 'cover_image_url', label: 'URL da imagem de capa', type: 'url' }, { name: 'category', label: 'Categoria' }, { name: 'status', label: 'Status', type: 'select', options: ['draft', 'published'], required: true },
   ] },
@@ -50,7 +51,11 @@ const resources: Resource[] = [
     { name: 'whatsapp', label: 'WhatsApp com DDI e DDD', help: 'Somente números. Ex.: 5531999999999.' },
     { name: 'maps_url', label: 'Link do Google Maps', type: 'url' },
     { name: 'instagram_url', label: 'Link do Instagram', type: 'url' },
+    { name: 'youtube_url', label: 'Link do YouTube — acompanhe nossos sermões', type: 'url' },
+    { name: 'tiktok_url', label: 'Link do TikTok', type: 'url' },
     { name: 'facebook_url', label: 'Link do Facebook', type: 'url' },
+    { name: 'pastor_phone', label: 'Telefone do pastor' },
+    { name: 'pastor_email', label: 'E-mail do pastor', type: 'text' },
   ] },
   { key: 'navigation_sections', label: 'Menu do site', singular: 'área do menu', icon: Settings2, description: 'Aqui você controla os botões principais do cabeçalho. Para adicionar itens dentro de um botão com seta, use “Páginas e locais do menu” e escolha exatamente o nome desta área.', fields: [
     { name: 'label', label: 'Nome da área', required: true, help: 'Ex.: IPU, DOCUMENTOS, PRESBITÉRIOS.' }, { name: 'sort_order', label: 'Ordem no menu', type: 'number', required: true }, { name: 'show_in_menu', label: 'Exibir no site?', type: 'select', options: ['true', 'false'], required: true }, { name: 'is_dropdown', label: 'Abrir lista de links?', type: 'select', options: ['true', 'false'], required: true }, { name: 'target_url', label: 'Destino se não abrir lista', type: 'url', help: 'Opcional. Usado quando “Abrir lista de links?” estiver como Não.' },
@@ -98,7 +103,7 @@ export default function ContentManager() {
     setLoading(true)
     setError('')
     const tableKey = activeKey === 'homepage_settings' ? 'site_settings' : activeKey
-    const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' || activeKey === 'homepage_slides' ? 'sort_order' : activeKey === 'site_settings' || activeKey === 'homepage_settings' ? 'setting_key' : 'created_at'
+    const orderColumn = activeKey === 'service_times' || activeKey === 'navigation_sections' || activeKey === 'homepage_slides' ? 'sort_order' : activeKey === 'bulletins' ? 'published_at' : activeKey === 'site_settings' || activeKey === 'homepage_settings' ? 'setting_key' : 'created_at'
     let query = supabase.from(tableKey as any).select('*')
     if (activeKey === 'site_settings' || activeKey === 'homepage_settings') query = query.eq('setting_key', 'church_profile') as any
     const { data, error: queryError } = await query.order(orderColumn, { ascending: activeKey === 'service_times' || activeKey === 'site_settings' || activeKey === 'homepage_settings' || activeKey === 'homepage_slides' })
@@ -162,6 +167,21 @@ export default function ContentManager() {
     const { data } = supabase.storage.from('church-media').getPublicUrl(path)
     updateField(targetField, data.publicUrl)
     setNotice(targetField === 'logo_url' ? 'Logo enviada. Salve as alterações para atualizar a identidade do site.' : 'Imagem enviada. Salve o cadastro para aplicar a imagem ao conteúdo.')
+  }
+
+  async function uploadPdf(file: File) {
+    if (!supabase || !editing) return
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) { setError('Selecione um arquivo PDF.'); return }
+    if (file.size > 20 * 1024 * 1024) { setError('O PDF deve ter no máximo 20 MB.'); return }
+    setUploadingImage(true); setError(''); setNotice('')
+    const safeName = file.name.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-zA-Z0-9._-]/g, '-')
+    const path = `bulletins/${Date.now()}-${safeName || 'boletim.pdf'}`
+    const { error: uploadError } = await supabase.storage.from('church-media').upload(path, file, { upsert: false, contentType: 'application/pdf' })
+    setUploadingImage(false)
+    if (uploadError) { setError('Não foi possível enviar o PDF. Confira as permissões de armazenamento e tente novamente.'); return }
+    const { data } = supabase.storage.from('church-media').getPublicUrl(path)
+    updateField('pdf_url', data.publicUrl)
+    setNotice('PDF enviado. Salve o boletim para publicá-lo no site.')
   }
 
   async function saveRecord(event: FormEvent<HTMLFormElement>) {
@@ -262,7 +282,7 @@ export default function ContentManager() {
             <div className="cms-fields">
               {resource.fields.map((field) => <label key={field.name} className={field.type === 'textarea' || field.type === 'json' ? 'cms-field cms-field-wide' : 'cms-field'}>
                 <span>{field.label}{field.required ? ' *' : ''}</span>
-                {field.type === 'textarea' || field.type === 'json' ? <textarea value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} rows={field.type === 'json' ? 8 : 4} spellCheck={field.type !== 'json'} />
+                {field.name === 'pdf_url' && resource.key === 'bulletins' ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL do PDF ou envie um arquivo" required={field.required} /><input type="file" accept="application/pdf,.pdf" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadPdf(file); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando PDF...' : 'PDF · máximo 20 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <a href={String(editing[field.name])} target="_blank" rel="noreferrer">Abrir PDF atual</a> : null}</> : field.type === 'textarea' || field.type === 'json' ? <textarea value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} rows={field.type === 'json' ? 8 : 4} spellCheck={field.type !== 'json'} />
                   : field.type === 'select' ? <select value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required}>{(field.options ?? []).map((option) => <option key={option} value={option}>{option === 'published' ? 'Publicado' : option === 'draft' ? 'Rascunho' : option === 'cancelled' ? 'Cancelado' : option === 'true' ? 'Sim' : option === 'false' ? 'Não' : option}</option>)}</select>
                   : field.type === 'url' && (field.name === 'cover_image_url' || field.name === 'logo_url' || field.name === 'welcome_background_url') ? <><input type="url" value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} placeholder="URL da imagem ou envie um arquivo" /><input type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" disabled={uploadingImage} onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadImage(file, field.name === 'logo_url' ? 'logo_url' : field.name === 'welcome_background_url' ? 'welcome_background_url' : 'cover_image_url'); event.currentTarget.value = '' }} /><small>{uploadingImage ? 'Enviando imagem...' : 'JPG, PNG, WebP, GIF ou SVG · máximo 10 MB. O arquivo será armazenado no Supabase.'}</small>{editing[field.name] ? <img src={String(editing[field.name])} alt={field.name === 'logo_url' ? 'Pré-visualização da logo' : field.name === 'welcome_background_url' ? 'Pré-visualização da foto de fundo' : 'Pré-visualização da imagem'} style={{ display: 'block', maxWidth: field.name === 'logo_url' ? '260px' : '220px', maxHeight: '140px', objectFit: 'contain', borderRadius: '8px', marginTop: '8px' }} /> : null}</>
                   : <input type={field.type === 'number' ? 'number' : field.type ?? 'text'} value={String(editing[field.name] ?? '')} onChange={(event) => updateField(field.name, event.target.value)} required={field.required} step={field.type === 'time' ? 60 : undefined} />}
