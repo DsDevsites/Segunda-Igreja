@@ -58,7 +58,7 @@ export default function ContentPage({ path }: { path: string }) {
       ])
       if (active && pagesResult.data) setMenuPages(pagesResult.data as MenuPage[])
       if (active && sectionsResult.data) setMenuSections(sectionsResult.data as MenuSection[])
-      if (active && settingsResult.data?.setting_value && typeof settingsResult.data.setting_value === 'object') setLogoUrl(String((settingsResult.data.setting_value as Record<string, unknown>).logo_url || '')); setSocialLinks(settingsResult.data.setting_value as typeof socialLinks)
+      if (active && settingsResult.data?.setting_value && typeof settingsResult.data.setting_value === 'object') { setLogoUrl(String((settingsResult.data.setting_value as Record<string, unknown>).logo_url || '')); setSocialLinks(settingsResult.data.setting_value as typeof socialLinks) }
     }
     void loadMenu()
     return () => { active = false }
